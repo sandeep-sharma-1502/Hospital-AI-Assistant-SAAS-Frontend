@@ -1,62 +1,50 @@
-import { useEffect, useState, useCallback, useRef } from "react";
-import { usePipecatClient } from "@pipecat-ai/client-react";
+import { useState, useCallback, useRef } from "react";
+import {
+  usePipecatClient,
+  usePipecatClientTransportState,
+} from "@pipecat-ai/client-react";
 
 export const useVoice = () => {
   const client = usePipecatClient();
-  const [status, setStatus] = useState("idle");
-  const [messages, setMessages] = useState([]);
+  const transportState = usePipecatClientTransportState();
 
+  const [messages, setMessages] = useState([]);
   const streamRef = useRef(null);
 
-  // -------------------------------
-  // Client Events
-  // -------------------------------
-  useEffect(() => {
-    if (!client) return;
+  // ==========================
+  // MAP TRANSPORT STATE → UI STATE
+  // ==========================
 
-    const handleStateChange = (state) => {
-      if (state === "connected") setStatus("connected");
-      else if (state === "disconnected") setStatus("idle");
-    };
+  let status = "idle";
 
-    const handleBotText = (event) => {
-      const text = event?.text?.trim();
-      if (!text) return;
+  if (transportState === "connecting") {
+    status = "connecting";
+  }
 
-      setMessages((prev) => [
-        ...prev,
-        { role: "bot", text }
-      ]);
-    };
+  if (transportState === "connected" || transportState === "ready") {
+    status = "connected";
+  }
 
-    client.on("transport-state-changed", handleStateChange);
-    client.on("bot-tts-text", handleBotText);
+  // ==========================
+  // CONNECT
+  // ==========================
 
-    return () => {
-      client.off("transport-state-changed", handleStateChange);
-      client.off("bot-tts-text", handleBotText);
-    };
-  }, [client]);
-
-  // -------------------------------
-  // CONNECT WITHOUT MIC
-  // -------------------------------
   const connect = useCallback(async () => {
     if (!client) return;
 
     try {
       await client.connect({
-        webrtcUrl: "http://localhost:8765/offer",
-        audio: false // 🔥 IMPORTANT — prevents auto mic request
+        connection_url: "http://localhost:8765/api/v1/webrtc/offer",
       });
     } catch (err) {
       console.error("Connection failed", err);
     }
   }, [client]);
 
-  // -------------------------------
-  // REQUEST MIC ONLY WHEN NEEDED
-  // -------------------------------
+  // ==========================
+  // ENABLE MIC
+  // ==========================
+
   const enableMic = useCallback(async () => {
     if (!client) return;
 
@@ -65,31 +53,50 @@ export const useVoice = () => {
       streamRef.current = stream;
 
       const track = stream.getAudioTracks()[0];
-      client.addTrack(track); // dynamically attach mic
+      client.addTrack(track);
     }
 
     streamRef.current.getAudioTracks()[0].enabled = true;
   }, [client]);
 
+  // ==========================
+  // DISABLE MIC
+  // ==========================
+
   const disableMic = useCallback(() => {
     if (!streamRef.current) return;
-
     streamRef.current.getAudioTracks()[0].enabled = false;
   }, []);
 
-  // -------------------------------
-  // SEND MESSAGE
-  // -------------------------------
-  const sendMessage = useCallback(async (text) => {
-    if (!client || !text.trim()) return;
+  // ==========================
+  // SEND TEXT MESSAGE
+  // ==========================
 
-    setMessages((prev) => [
-      ...prev,
-      { role: "user", text: text.trim() }
-    ]);
+  const sendMessage = useCallback(
+    async (text) => {
+      if (!client || !text.trim()) return;
 
-    await client.sendClientMessage("user-text", { text });
-  }, [client]);
+      const clean = text.trim();
+
+      setMessages((prev) => [...prev, { role: "user", text: clean }]);
+
+      await client.sendClientMessage("user-text", {
+        text: clean,
+      });
+    },
+    [client]
+  );
+
+  // ==========================
+  // BOT MESSAGE LISTENER
+  // ==========================
+
+  client?.on("bot-tts-text", (event) => {
+    const text = event?.text?.trim();
+    if (!text) return;
+
+    setMessages((prev) => [...prev, { role: "bot", text }]);
+  });
 
   return {
     status,
@@ -98,6 +105,5 @@ export const useVoice = () => {
     sendMessage,
     enableMic,
     disableMic,
-    streamRef
   };
 };
