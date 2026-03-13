@@ -1,17 +1,49 @@
-import { useState } from 'react';
+// 
+
+
+import { useEffect, useState } from "react";
+import {
+  fetchAppointments,
+  cancelAppointment
+} from "../services/appointmentApi";
 
 export const useAppointments = () => {
-  const [appointments, setAppointments] = useState([
-    { id: 'APP-001', patient: 'Anjali Gupta', doctor: 'Dr. Verma', date: '2026-03-01', time: '10:30 AM', status: 'confirmed', type: 'Cardiology' },
-    { id: 'APP-002', patient: 'Rahul Singh', doctor: 'Dr. Iyer', date: '2026-03-01', time: '12:00 PM', status: 'pending', type: 'General Checkup' },
-    { id: 'APP-003', patient: 'Sana Khan', doctor: 'Dr. Verma', date: '2026-03-02', time: '09:15 AM', status: 'cancelled', type: 'Follow-up' },
-  ]);
+  const [appointments, setAppointments] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-  const updateStatus = (id, newStatus) => {
-    setAppointments(prev => prev.map(app => 
-      app.id === id ? { ...app, status: newStatus } : app
-    ));
+  const loadAppointments = async () => {
+    try {
+      setLoading(true);
+      const data = await fetchAppointments();
+      setAppointments(data);
+    } catch (err) {
+      setError("Failed to load appointments");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  return { appointments, updateStatus };
+  const updateStatus = async (id, newStatus) => {
+    try {
+      if (newStatus === "cancelled") {
+        await cancelAppointment(id);
+        await loadAppointments();
+      }
+    } catch {
+      alert("Error updating appointment");
+    }
+  };
+
+  useEffect(() => {
+    loadAppointments();
+  }, []);
+
+  return {
+    appointments,
+    loading,
+    error,
+    updateStatus,
+    reload: loadAppointments
+  };
 };

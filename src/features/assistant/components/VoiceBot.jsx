@@ -1,78 +1,164 @@
-import React, { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { Mic, Send, Bot, User } from "lucide-react";
+import React, { useState, useCallback } from "react";
+import { motion } from "framer-motion";
+import { Moon, Sun } from "lucide-react";
 import { useVoice } from "../hooks/useVoice";
+import { RTVIEvent } from "@pipecat-ai/client-js";
+import { useRTVIClientEvent } from "@pipecat-ai/client-react";
+import { usePipecatClient } from "@pipecat-ai/client-react";
+
 import VoiceOrb from "./VoiceOrb";
+import ChatWindow from "./ChatWindow";
+import ChatInput from "./ChatInput";
+import Suggestions from "./Suggestions";
 
 export default function VoiceBot() {
   const { status, messages, connect, sendMessage } = useVoice();
-  const [input, setInput] = useState("");
+  const [isDarkMode, setIsDarkMode] = useState(true);
+    const [isSpeaking, setIsSpeaking] = useState(false);
+  const [isUserSpeaking, setIsUserSpeaking] = useState(false);
+  const client = usePipecatClient();
 
-  const handleSend = () => {
-    sendMessage(input);
-    setInput("");
-  };
+  useRTVIClientEvent(
+  RTVIEvent.UserStartedSpeaking,
+  useCallback(() => {
+    setIsUserSpeaking(true);
+  }, [])
+);
+
+useRTVIClientEvent(
+  RTVIEvent.UserStoppedSpeaking,
+  useCallback(() => {
+    setIsUserSpeaking(false);
+  }, [])
+);
+    
+useRTVIClientEvent(
+  RTVIEvent.BotStartedSpeaking,
+  useCallback(() => {
+    setIsSpeaking(true);
+  }, [])
+);
+
+useRTVIClientEvent(
+  RTVIEvent.BotStoppedSpeaking,
+  useCallback(() => {
+    setIsSpeaking(false);
+  }, [])
+);
+
+  // const handleConnection = () => {
+  //   if (status === "idle") {
+  //     connect();
+  //   } else if (status === "connected") {
+  //     window.location.reload(); // simple disconnect fallback
+  //   }
+  // };
+
+  const handleConnection = async () => {
+
+  if (status === "idle") {
+    await connect();
+  }
+
+  else if (status === "connected") {
+    await client.disconnect();
+  }
+
+};
 
   return (
-    <div className="flex flex-col h-full max-w-2xl mx-auto">
-      {/* Orb Section */}
-      <div className="flex flex-col items-center py-10">
-        <VoiceOrb status={status} />
-        <p className="mt-4 text-slate-400 font-medium animate-pulse capitalize">
-          {status === 'idle' ? 'Ready to help' : status}
-        </p>
-        
-        {status === "idle" && (
-          <button 
-            onClick={connect}
-            className="mt-4 bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-2xl font-semibold shadow-lg shadow-blue-200 transition-all flex items-center gap-2"
-          >
-            <Mic size={20} /> Start Conversation
-          </button>
-        )}
-      </div>
+    <div className={`assistant-scope ${isDarkMode ? "dark-mode-active" : ""}`}>
+      <div className="h-screen flex items-center justify-center p-4 transition-colors duration-500 bg-[var(--bg-main)]">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.98 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="w-full max-w-4xl bg-[var(--card)] rounded-[32px] shadow-2xl border border-[var(--border-subtle)] flex flex-col h-[90vh] overflow-hidden"
+        >
 
-      {/* Messages Area */}
-      <div className="flex-1 overflow-y-auto space-y-4 px-4 custom-scrollbar">
-        <AnimatePresence initial={false}>
-          {messages.map((m, i) => (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}
-            >
-              <div className={`max-w-[80%] p-4 rounded-2xl flex gap-3 ${
-                m.role === "user" 
-                ? "bg-blue-600 text-white rounded-tr-none" 
-                : "bg-white border border-slate-100 text-slate-800 shadow-sm rounded-tl-none"
-              }`}>
-                {m.role === "bot" && <Bot size={18} className="text-blue-500 shrink-0" />}
-                <p className="text-sm leading-relaxed">{m.text}</p>
-                {m.role === "user" && <User size={18} className="text-blue-200 shrink-0" />}
-              </div>
-            </motion.div>
-          ))}
-        </AnimatePresence>
-      </div>
+          {/* ================= HEADER ================= */}
+          <header className="px-6 py-4 border-b border-[var(--border-subtle)] flex justify-between items-center shrink-0">
+            
+            <div className="flex items-center gap-6">
+              <div>
+                {/* className={`w-3 h-3 rounded-full ${
+                  status !== "idle"
+                    ? "bg-emerald-500 animate-pulse"
+                    : "bg-[#FF3A3A]"
+                }`} */}
+                  <span className="relative inline-flex h-2.5 w-2.5">
+                    {status == "connected" ? (
+                      <>
+                        <span className="absolute inline-flex h-full w-full rounded-full bg-green-500 opacity-75 animate-ping"></span>
+                        <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500"></span>
+                      </>
+                    ) : (
+                      <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#FF3A3A]"></span>
+                    )}
+                  </span>
+                </div>
+              <h1 className="font-bold text-[var(--text-primary)] tracking-tight text-lg">
+                MedFlow AI
+              </h1>
+            </div>
+            <div>
+              {isUserSpeaking && "🎤 User Speaking"}
+              {isSpeaking && "🤖 Bot Speaking"}
+            </div>
+            <div className="flex items-center gap-2">
 
-      {/* Input Dock */}
-      <div className="p-6">
-        <div className="relative group">
-          <input
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-            placeholder="Type your symptoms or questions..."
-            className="w-full pl-6 pr-16 py-4 bg-white border border-slate-200 rounded-2xl shadow-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all"
-          />
-          <button 
-            onClick={handleSend}
-            className="absolute right-2 top-2 p-2.5 bg-slate-900 text-white rounded-xl hover:bg-blue-600 transition-colors"
-          >
-            <Send size={20} />
-          </button>
-        </div>
+              {/* Dark Mode Toggle */}
+              <button
+                onClick={() => setIsDarkMode(!isDarkMode)}
+                className="p-2 rounded-xl hover:bg-gray-500/10 text-[var(--text-secondary)] transition-all"
+              >
+                {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
+              </button>
+
+              {/* Status Badge */}
+              <span className="text-sm font-bold px-4 py-1.5 bg-blue-500/10 text-blue-500 rounded-lg uppercase tracking-widest">
+                {status}
+              </span>
+
+              {/* Start / Disconnect Button */}
+              <button
+                onClick={handleConnection}
+                disabled={status === "connecting"}
+                className={`px-4 py-1.5 text-sm font-semibold rounded-lg transition-all
+                  ${
+                    status === "idle"
+                      ? "bg-green-500 hover:bg-green-600 text-white"
+                      : status === "connecting"
+                      ? "bg-yellow-500 text-white cursor-not-allowed"
+                      : "bg-red-500 hover:bg-red-600 text-white"
+                  }
+                `}
+              >
+                {status === "idle" && "Start"}
+                {status === "connecting" && "Connecting..."}
+                {status === "connected" && "Disconnect"}
+              </button>
+
+            </div>
+          </header>
+
+          {/* ================= CHAT WINDOW ================= */}
+          <ChatWindow messages={messages} />
+
+          {/* ================= SUGGESTIONS ================= */}
+          <div className="px-6 py-3 bg-[var(--card)] border-t border-[var(--border-subtle)] shrink-0">
+            <Suggestions onSelect={(text) => sendMessage(text)} />
+          </div>
+
+          {/* ================= CHAT INPUT ================= */}
+          <div className="bg-[var(--card)] shrink-0">
+            <ChatInput
+                sendMessage={sendMessage}
+                status={status}
+                connect={connect}
+              />
+          </div>
+
+        </motion.div>
       </div>
     </div>
   );

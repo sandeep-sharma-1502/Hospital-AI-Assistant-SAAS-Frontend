@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
-import { useDispatch } from 'react-redux';
+import { useDispatch ,useSelector } from 'react-redux';
 import { 
   LayoutDashboard, 
   MessageSquare, 
@@ -10,17 +10,18 @@ import {
   LogOut, 
   ChevronLeft, 
   ChevronRight,
-  Stethoscope 
+  Stethoscope,
 } from 'lucide-react';
 
 // Redux Action
-import { logout } from '../../store/slices/authSlice';
+import { logoutAdmin } from '../../store/slices/authSlice';
 
 const navItems = [
   { name: 'Dashboard', path: '/admin/dashboard', icon: LayoutDashboard },
   { name: 'Sessions', path: '/admin/sessions', icon: MessageSquare },
   { name: 'Knowledge', path: '/admin/knowledge', icon: Database },
   { name: 'Appointments', path: '/admin/appointments', icon: CalendarCheck },
+  { name: 'Dcotor', path : '/admin/doctors',icon: Stethoscope}
 ];
 
 export default function Sidebar() {
@@ -28,11 +29,12 @@ export default function Sidebar() {
   const location = useLocation();
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const { logoutLoading } = useSelector((state) => state.auth);
 
   // Logout Functionality
-  const handleLogout = () => {
+  const handleLogout = async () => {
     if (window.confirm("Are you sure you want to logout?")) {
-      dispatch(logout());
+      await dispatch(logoutAdmin());
       navigate('/admin/login');
     }
   };
@@ -44,7 +46,7 @@ export default function Sidebar() {
       className="h-screen bg-[var(--card)] text-[var(--text-secondary)] flex flex-col sticky top-0 border-r border-[var(--border-subtle)] transition-all duration-300 ease-in-out z-20"
     >
       {/* Brand Header */}
-      <div className="p-6 flex items-center gap-3 border-b border-[var(--border-subtle)] overflow-hidden">
+      <div className="px-4 py-[11px] flex items-center gap-3 border-b border-[var(--border-subtle)] overflow-hidden">
         <div className="min-w-[40px] w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-blue-500/20 shrink-0">
           <Stethoscope size={22} />
         </div>
@@ -105,7 +107,11 @@ export default function Sidebar() {
           className="w-full flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-red-500/10 hover:text-red-500 transition-all text-sm font-bold group text-red-400"
         >
           <LogOut size={20} className="shrink-0 group-hover:rotate-12 transition-transform" />
-          {!isCollapsed && <span>Logout</span>}
+          {!isCollapsed && (
+            <span>
+              {logoutLoading ? "Logging out..." : "Logout"}
+            </span>
+          )}
         </button>
         
         <button 

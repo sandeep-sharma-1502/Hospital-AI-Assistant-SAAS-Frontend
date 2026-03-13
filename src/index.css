@@ -9,6 +9,12 @@
   --color-input-bg: var(--input-bg);
 }
 
+@layer utilities {
+  .animate-ping-fast {
+    animation: ping 1s cubic-bezier(0,0,.2,1) infinite;
+  }
+}
+
 @layer base {
   /* 1. Global / Admin Variables (Redux controlled) */
   :root {

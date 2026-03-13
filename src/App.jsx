@@ -20,13 +20,23 @@ import LoginPage from './app/admin/LoginPage';
 import AdminLayout from './shared/layout/AdminLayout';
 import PublicLayout from './shared/layout/PublicLayout';
 import NotFound from './app/NotFound';
+import DoctorsPage from './app/admin/DoctorsPage';
 
 // 1. Initialize Pipecat Client
+// const client = new PipecatClient({
+//   transport: new SmallWebRTCTransport({
+//     iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
+//   }),
+//   enableMic: true,
+//   enableCam: false,
+// });
+
 const client = new PipecatClient({
   transport: new SmallWebRTCTransport({
+    webrtcUrl: "http://localhost:8765/api/v1/webrtc/offer", // ✅ CORRECT BACKEND URL
     iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
   }),
-  enableMic: true,
+  enableMic: false, // 🔥 we control mic manually
   enableCam: false,
 });
 
@@ -70,6 +80,8 @@ export default function App() {
             <Route path="sessions" element={<SessionsPage />} />
             <Route path="knowledge" element={<KnowledgePage />} />
             <Route path="appointments" element={<AppointmentsPage />} />
+            <Route path="doctors" element={<DoctorsPage />} />
+            
           </Route>
 
           {/* --- 404 Handling --- */}
