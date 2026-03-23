@@ -1,14 +1,24 @@
 import axios from "axios";
 import { attachInterceptors } from "./interceptors";
 
+/*
+Axios instance
+*/
+
 const apiClient = axios.create({
-  baseURL: "http://localhost:8765/api/v1",
+
+  baseURL: "http://localhost:7000/api/v1",
+  withCredentials: true,
   headers: {
     "Content-Type": "application/json",
   },
+
 });
 
-// Attach interceptors
+/*
+Attach interceptors
+*/
+
 attachInterceptors(apiClient);
 
 export default apiClient;

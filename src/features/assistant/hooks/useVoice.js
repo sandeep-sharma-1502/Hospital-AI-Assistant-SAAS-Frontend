@@ -1,121 +1,134 @@
-import { useState, useCallback, useRef } from "react";
+import { useEffect, useState, useRef } from "react";
+import { Room } from "livekit-client";
+import { useDispatch } from "react-redux";
 import {
-  usePipecatClient,
-  usePipecatClientTransportState,
-  useRTVIClientEvent
-} from "@pipecat-ai/client-react";
-import { RTVIEvent } from "@pipecat-ai/client-js";
+  addMessage,
+  setAiSpeaking,
+  setStatus,
+} from "../../../store/slices/assistantSlice";
 
 export const useVoice = () => {
-  const client = usePipecatClient();
-  const transportState = usePipecatClientTransportState();
+  const dispatch = useDispatch();
 
-  const [messages, setMessages] = useState([]);
-  const streamRef = useRef(null);
+  const [room, setRoom] = useState(null);
+  const [status, setLocalStatus] = useState("idle");
+  const [isRecording, setIsRecording] = useState(false);
 
+  const audioRef = useRef(null);
 
-  // ==========================
-  // MAP TRANSPORT STATE → UI STATE
-  // ==========================
+  // 🔥 AUDIO UNLOCK
+  useEffect(() => {
+    const unlock = () => {
+      const audio = new Audio();
+      audio.muted = true;
+      audio.play().catch(() => {});
+      window.removeEventListener("click", unlock);
+    };
 
-  let status = "idle";
+    window.addEventListener("click", unlock);
+  }, []);
 
-  if (transportState === "connecting") {
-    status = "connecting";
-  }
+  // ================= CONNECT =================
+  useEffect(() => {
+    let livekitRoom;
 
-  if (transportState === "connected" || transportState === "ready") {
-    status = "connected";
-  }
+    const init = async () => {
+      try {
+        // ✅ token backend se
+        const res = await fetch("http://localhost:7000/api/livekit/token", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            roomName: "hospital-room",
+            userName: "sandeep",
+          }),
+        });
 
-  // ==========================
-  // CONNECT
-  // ==========================
+        const data = await res.json();
 
-const connect = useCallback(async () => {
-  if (!client) return;
+        // ✅ Room create karo
+        livekitRoom = new Room();
 
-  try {
+        await livekitRoom.connect(data.url, data.token);
 
-    // 1️⃣ browser mic permission
-    await navigator.mediaDevices.getUserMedia({ audio: true });
+        setRoom(livekitRoom);
+        setLocalStatus("connected");
+        dispatch(setStatus("connected"));
 
-    // 2️⃣ connect pipecat
-    await client.connect({
-      connection_url: "http://localhost:8765/api/v1/webrtc/offer",
-    });
+        // 🔊 AI audio receive
+        livekitRoom.on("trackSubscribed", (track) => {
+          if (track.kind === "audio") {
+            const stream = new MediaStream([track.mediaStreamTrack]);
 
-  } catch (err) {
-    console.error("Mic permission denied or connection failed", err);
-    alert("Please allow microphone access.");
-  }
+            const audio = new Audio();
+            audio.srcObject = stream;
+            audio.autoplay = true;
 
-}, [client]);
+            audioRef.current = audio;
 
-  // ==========================
-  // ENABLE MIC
-  // ==========================
+            dispatch(setAiSpeaking(true));
 
-  // const enableMic = useCallback(async () => {
-  //   if (!client) return;
+            audio.onended = () => {
+              dispatch(setAiSpeaking(false));
+            };
 
-  //   if (!streamRef.current) {
-  //     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-  //     streamRef.current = stream;
+            audio.play().catch(() => {
+              dispatch(setAiSpeaking(false));
+            });
+          }
+        });
 
-  //     const track = stream.getAudioTracks()[0];
-  //     client.addTrack(track);
-  //   }
+        // 💬 AI text receive
+        livekitRoom.on("dataReceived", (payload) => {
+          const text = new TextDecoder().decode(payload);
+          dispatch(addMessage({ role: "bot", content: text }));
+        });
 
-  //   streamRef.current.getAudioTracks()[0].enabled = true;
-  // }, [client]);
+      } catch (err) {
+        console.error("LiveKit error:", err);
+        setLocalStatus("error");
+        dispatch(setStatus("error"));
+      }
+    };
 
-  // // ==========================
-  // // DISABLE MIC
-  // // ==========================
+    init();
 
-  // const disableMic = useCallback(() => {
-  //   if (!streamRef.current) return;
-  //   streamRef.current.getAudioTracks()[0].enabled = false;
-  // }, []);
+    return () => {
+      if (livekitRoom) livekitRoom.disconnect();
+    };
+  }, [dispatch]);
 
-  // ==========================
-  // SEND TEXT MESSAGE
-  // ==========================
+  // 🎤 MIC START
+  const startRecording = async () => {
+    if (!room) return;
+    await room.localParticipant.setMicrophoneEnabled(true);
+    setIsRecording(true);
+  };
 
-  // send user message
-  const sendMessage = useCallback(
-    async (text) => {
-      if (!client || !text.trim()) return;
+  // 🛑 MIC STOP
+  const stopRecording = async () => {
+    if (!room) return;
+    await room.localParticipant.setMicrophoneEnabled(false);
+    setIsRecording(false);
+  };
 
-      const clean = text.trim();
+  // 💬 TEXT SEND
+  const sendMessage = (text) => {
+    if (!room || !text.trim()) return;
 
-      setMessages((prev) => [...prev, { role: "user", text: clean }]);
+    dispatch(addMessage({ role: "user", content: text }));
 
-      await client.sendClientMessage("user-text", { text: clean });
-    },
-    [client]
-  );
-
-
-useRTVIClientEvent(
-  RTVIEvent.BotOutput,
-  useCallback((data) => {
-    const text = data?.text?.trim();
-    if (!text) return;
-
-    setMessages((prev) => [...prev, { role: "bot", text }]);
-  }, [])
-);
-
-
+    room.localParticipant.publishData(
+      new TextEncoder().encode(text),
+      { reliable: true }
+    );
+  };
 
   return {
-    status,
-    messages,
-    connect,
     sendMessage,
-    // enableMic,
-    // disableMic,
+    startRecording,
+    stopRecording,
+    isRecording,
+    status,
   };
 };

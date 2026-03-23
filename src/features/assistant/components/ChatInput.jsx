@@ -1,68 +1,76 @@
 import React, { useState } from "react";
-import { Mic, MicOff, Send } from "lucide-react";
-import { usePipecatClientMicControl } from "@pipecat-ai/client-react";
-import { PipecatClientMicToggle } from "@pipecat-ai/client-react";
-import { VoiceVisualizer } from "@pipecat-ai/client-react";
+import { Send, Mic, MicOff } from "lucide-react";
 
-
-export default function ChatInput({ sendMessage, status, connect }) {
+export default function ChatInput({ sendMessage, isConnected }) {
   const [input, setInput] = useState("");
+  const [isMicOn, setIsMicOn] = useState(false);
 
-  // const { enableMic, disableMic, isMicEnabled } = usePipecatClientMicControl();
-
+  // ================= SEND TEXT =================
   const handleSend = () => {
-    if (!input.trim()) return;
-    sendMessage(input);
+    if (!input.trim() || !isConnected) return;
+
+    sendMessage(input); 
     setInput("");
+  };
+
+  // ================= MIC TOGGLE =================
+  const handleMic = () => {
+    if (!isConnected) return;
+    setIsMicOn((prev) => !prev);
   };
 
   return (
     <div className="px-6 pb-6">
-      <div className="max-w-3xl mx-auto relative">
+      <div className="max-w-3xl mx-auto relative group">
+
+        {/* INPUT */}
         <input
-          placeholder="Describe your symptoms..."
-          className="w-full pl-6 pr-32 py-4 bg-[var(--input-bg)] border border-[var(--border-subtle)] text-[var(--text-primary)] rounded-2xl outline-none placeholder:text-gray-500 focus:border-blue-500 transition-all"
+          placeholder={isConnected ? "Ask your health question..." : "Establish link to start chat..."}
+          disabled={!isConnected}
+          className={`w-full pl-6 pr-32 py-4 bg-zinc-800 border transition-all outline-none rounded-2xl text-white placeholder:text-zinc-600 ${
+            isConnected 
+            ? 'border-zinc-700 focus:border-blue-500 bg-zinc-800/80 shadow-[inset_0_2px_4px_rgba(0,0,0,0.3)]' 
+            : 'border-zinc-800/50 opacity-50 cursor-not-allowed'
+          }`}
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && handleSend()}
         />
 
-        <div className="absolute right-2 top-2 flex gap-2">
-          <div className="flex items-center">
-              <VoiceVisualizer
-                participantType="local"
-                barColor="#3B82F6"
-                barGap={2}
-                barWidth={3}
-                barMaxHeight={20}
-              />
-          </div>
-          <PipecatClientMicToggle>
-          {({ isMicEnabled, onClick }) => (
-            <button 
-            onClick={() => {
-                if (status === "idle") {
-                  connect();
-                } else {
-                  onClick();
-                }}}
-             className={`p-2 rounded-xl transition-all ${
-              isMicEnabled? "text-gray-400 hover:bg-gray-500/10":"text-red-500 bg-red-500/10"
+        {/* ACTIONS */}
+        <div className="absolute right-2 top-2 flex gap-2 items-center">
+
+          {/* MIC BUTTON */}
+          <button
+            onClick={handleMic}
+            disabled={!isConnected}
+            className={`p-2 rounded-xl transition-all ${
+              !isConnected 
+              ? 'text-zinc-700 cursor-not-allowed' 
+              : isMicOn
+                ? "text-blue-500 bg-blue-500/10"
+                : "text-zinc-500 hover:bg-zinc-700/50"
             }`}
-            >
-              {isMicEnabled ?  <Mic size={20} /> : <MicOff size={20} />}
-            </button>
-          )}
-        </PipecatClientMicToggle>
+          >
+            {isMicOn ? <Mic size={20} /> : <MicOff size={20} />}
+          </button>
+
+          {/* SEND BUTTON */}
           <button
             onClick={handleSend}
-            className="bg-blue-600 text-white p-2 rounded-xl shadow-lg active:scale-95 transition-transform"
+            disabled={!isConnected || !input.trim()}
+            className={`p-2 rounded-xl transition-all shadow-lg active:scale-95 ${
+              isConnected && input.trim()
+              ? 'bg-blue-600 text-white hover:bg-blue-500 shadow-blue-600/20'
+              : 'bg-zinc-800 text-zinc-700 cursor-not-allowed'
+            }`}
           >
             <Send size={20} />
           </button>
+
         </div>
       </div>
     </div>
   );
-}
+}

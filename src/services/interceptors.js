@@ -2,38 +2,57 @@ import { store } from "../store";
 
 export const attachInterceptors = (axiosInstance) => {
 
-  // REQUEST
+  /*
+  REQUEST INTERCEPTOR
+  */
+
   axiosInstance.interceptors.request.use(
-    (config) => {
-      const token = store.getState().auth.token;
-
-      if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
-      }
-
-      return config;
-    },
+    (config) => config,
     (error) => Promise.reject(error)
   );
 
-  // RESPONSE
+  /*
+  RESPONSE INTERCEPTOR
+  */
+
   axiosInstance.interceptors.response.use(
+
     (response) => response,
+
     (error) => {
 
+      /*
+      Unauthorized
+      */
+
       if (error.response?.status === 401) {
-        localStorage.removeItem("adminToken");
-        localStorage.removeItem("adminUser");
-        window.location.href = "/admin/login";
+        
+        const requestUrl = error.config?.url || "";
+        const isAdminRequest = requestUrl.includes("/admin/");
+        // ✅ Don't redirect if the is-auth check itself 401s — the rejected thunk handles it
+        const isAuthCheck = requestUrl.includes("/admin/auth/is-auth");
+
+        if (isAdminRequest && !isAuthCheck) {
+          localStorage.removeItem("adminUser");
+          // ✅ Use replace() to avoid polluting browser history
+          window.location.replace("/admin/login");
+        }
       }
 
-      // 🔥 Proper error message forwarding
+      /*
+      Backend error format
+      */
+
       const message =
+        error.response?.data?.message ||
         error.response?.data?.detail ||
         error.message ||
         "Something went wrong";
 
-      return Promise.reject(message);
+      return Promise.reject(new Error(message));
+
     }
+
   );
+
 };

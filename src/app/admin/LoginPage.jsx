@@ -7,7 +7,7 @@ export default function LoginPage() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  const { loading, error } = useSelector((state) => state.auth);
+  const { loading, error } = useSelector((state) => state.adminAuth);
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -44,14 +44,26 @@ export default function LoginPage() {
             required
           />
 
-          <input
-            type="password"
-            placeholder="Password"
-            className="w-full p-4 rounded-xl bg-[var(--bg-main)] border border-[var(--border-subtle)]"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
+          <div className="space-y-1">
+            <div className="flex justify-between items-center px-1">
+              <span className="text-xs font-semibold text-[var(--text-secondary)]">Password</span>
+              <button 
+                type="button"
+                onClick={() => navigate("/admin/forgot-password")}
+                className="text-xs font-semibold text-blue-600 hover:underline"
+              >
+                Forgot?
+              </button>
+            </div>
+            <input
+              type="password"
+              placeholder="••••••••"
+              className="w-full p-4 rounded-xl bg-[var(--bg-main)] border border-[var(--border-subtle)]"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+          </div>
 
           {error && (
             <p className="text-red-500 text-sm text-center">

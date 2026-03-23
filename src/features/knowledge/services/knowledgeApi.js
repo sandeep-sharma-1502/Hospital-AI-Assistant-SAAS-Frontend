@@ -1,13 +1,24 @@
+import apiClient from "../../../services/apiClient";
+
 export const uploadDocument = async (file) => {
-  // Real API: return apiClient.post('/admin/knowledge/upload', formData);
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve({ 
-        id: Math.random().toString(36).substr(2, 9),
-        name: file.name,
-        size: (file.size / 1024).toFixed(1) + " KB",
-        status: 'processing' 
-      });
-    }, 2000);
-  });
+
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const res = await apiClient.post(
+    "/admin/knowledge/upload",
+    formData,
+    {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    }
+  );
+
+  return res.data;
+};
+
+export const fetchDocuments = async () => {
+  const res = await apiClient.get("/admin/knowledge");
+  return res.data;
 };

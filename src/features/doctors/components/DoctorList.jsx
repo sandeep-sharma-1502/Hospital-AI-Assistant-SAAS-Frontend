@@ -1,132 +1,75 @@
-import { useEffect, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { ChevronRight, Users } from "lucide-react";
-import { fetchDoctors } from "../services/doctorApi";
+import { Search, UserCircle, Activity, ChevronRight } from "lucide-react";
 
-// --- Shimmer Item Component ---
-const ShimmerItem = () => (
-  <div className="flex items-center justify-between p-5 animate-pulse border-b border-border-subtle last:border-0">
-    <div className="flex items-center gap-4">
-      <div className="w-12 h-12 rounded-2xl bg-border-subtle/50" />
-      <div className="space-y-2">
-        <div className="h-4 w-32 bg-border-subtle/50 rounded-md" />
-        <div className="h-3 w-40 bg-border-subtle/30 rounded-md" />
-      </div>
-    </div>
-    <div className="w-5 h-5 bg-border-subtle/30 rounded-full" />
-  </div>
-);
-
-export default function DoctorList({ onSelect, selectedId, refreshKey }) {
-  const [doctors, setDoctors] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    loadDoctors();
-  }, [refreshKey]);
-
-  const loadDoctors = async () => {
-    setLoading(true);
-    try {
-      const data = await fetchDoctors();
-      setDoctors(data);
-    } catch (err) {
-      console.error("Error loading doctors:", err);
-    } finally {
-      setTimeout(() => setLoading(false), 600);
-    }
-  };
-
+export default function DoctorList({ onSelect, selectedId, doctors = [], onSearchChange }) {
   return (
-    <div className="bg-card border border-border-subtle rounded-[32px] shadow-sm overflow-hidden transition-colors duration-300">
-      <div className="p-6 border-b border-border-subtle flex justify-between items-center bg-card/50">
-        <div className="flex items-center gap-2">
-          <Users size={18} className="text-blue-500" />
-          <h3 className="font-bold text-text-primary">Medical Staff Directory</h3>
+    <div className="flex-1 flex flex-col bg-[#09090b] border border-white/[0.04] rounded-[36px] overflow-hidden shadow-2xl">
+      
+      {/* Premium Search Header */}
+      <div className="p-5 border-b border-white/[0.03] bg-zinc-900/20 backdrop-blur-md">
+        <div className="relative group">
+          <Search 
+            className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-600 group-focus-within:text-blue-500 transition-colors" 
+            size={14} 
+          />
+          <input 
+            type="text" 
+            placeholder="Search Medical Staff..." 
+            onChange={(e) => onSearchChange?.(e.target.value)}
+            className="w-full h-11 pl-11 pr-4 bg-zinc-900/50 border border-white/[0.05] rounded-[18px] text-[11px] font-black uppercase tracking-widest text-white outline-none focus:border-blue-500/40 focus:bg-zinc-900 transition-all placeholder:text-zinc-700"
+          />
         </div>
-        <span className="px-3 py-1 bg-blue-500/10 text-blue-500 rounded-full text-[10px] font-black uppercase">
-          {loading ? "..." : `${doctors.length} Staff`}
-        </span>
       </div>
 
-      <div className="divide-y divide-border-subtle max-h-[600px] overflow-y-auto">
-        {loading ? (
-          <>
-            <ShimmerItem />
-            <ShimmerItem />
-            <ShimmerItem />
-          </>
-        ) : (
-          <AnimatePresence mode="popLayout">
-            {doctors.map((doc, index) => (
-              <motion.div
-                layout
-                key={doc.id}
-                onClick={() => onSelect(doc)}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ 
-                  opacity: 1, 
-                  y: 0,
-                  transition: { 
-                    delay: index * 0.04,
-                    duration: 0.1, 
-                    ease: "linear"
-                  } 
-                }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                className={`flex items-center justify-between p-5 cursor-pointer transition-all hover:bg-blue-500/5 group ${
-                  selectedId === doc.id
-                    ? "bg-blue-500/10 ring-1 ring-inset ring-blue-500/20"
-                    : ""
-                }`}
-              >
-                <div className="flex items-center gap-4">
-                  {/* Avatar Section */}
-                  <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-bold text-sm transition-all duration-300 ${
-                    selectedId === doc.id 
-                    ? "bg-blue-600 text-white shadow-lg shadow-blue-500/30" 
-                    : "bg-input-bg text-text-secondary border border-border-subtle"
-                  }`}>
-                    {doc.name ? doc.name.split(" ").map(n => n[0]).join("") : "?"}
-                  </div>
+      {/* List Area - High Density */}
+      <div className="flex-1 overflow-y-auto custom-scrollbar p-3 space-y-1.5">
+        {doctors.length > 0 ? (
+          doctors.map((doc) => (
+            <button
+              key={doc.id}
+              onClick={() => onSelect(doc)}
+              className={`w-full group flex items-center gap-4 p-3.5 rounded-[22px] transition-all duration-300 relative overflow-hidden ${
+                selectedId === doc.id 
+                ? "bg-blue-600 text-white shadow-[0_10px_30px_rgba(37,99,235,0.25)] scale-[1.02] z-10" 
+                : "hover:bg-white/[0.03] text-zinc-400 hover:text-white"
+              }`}
+            >
+              {/* Profile Avatar / Initial */}
+              <div className={`w-11 h-11 min-w-[44px] rounded-[14px] flex items-center justify-center font-black text-xs shadow-inner transition-colors duration-500 ${
+                selectedId === doc.id 
+                ? "bg-white/20" 
+                : "bg-zinc-900 text-blue-500 border border-white/[0.03] group-hover:border-blue-500/30"
+              }`}>
+                {doc.name.charAt(0).toUpperCase()}
+              </div>
 
-                  {/* Info Section */}
-                  <div>
-                    <p className="text-sm font-bold text-text-primary group-hover:text-blue-500 transition-colors">
-                      {doc.name}
+              {/* Info Area */}
+              <div className="text-left overflow-hidden flex-1">
+                <p className={`font-black text-[12px] tracking-tight truncate leading-tight ${selectedId === doc.id ? "text-white" : "text-zinc-200"}`}>
+                  {doc.name}
+                </p>
+                <div className="flex items-center gap-1.5 mt-1">
+                    <Activity size={10} className={selectedId === doc.id ? "text-white/50" : "text-blue-600"} />
+                    <p className={`text-[9px] font-black uppercase tracking-widest truncate ${
+                        selectedId === doc.id ? "text-white/60" : "text-zinc-500"
+                    }`}>
+                        {doc.specialization || "General Physician"}
                     </p>
-                    <div className="flex items-center gap-2 mt-0.5">
-                      <p className="text-[11px] text-text-secondary font-medium uppercase tracking-wider">
-                        {doc.department}
-                      </p>
-                      {doc.specialization && (
-                        <>
-                          <span className="w-1 h-1 rounded-full bg-border-subtle" />
-                          <p className="text-[11px] text-blue-500/70 font-bold italic">
-                            {doc.specialization}
-                          </p>
-                        </>
-                      )}
-                    </div>
-                  </div>
                 </div>
+              </div>
 
-                {/* Action Icon */}
-                <ChevronRight 
-                  size={18} 
-                  className={`transition-all duration-300 ${
-                    selectedId === doc.id ? "text-blue-500 translate-x-1" : "text-text-secondary opacity-20"
-                  }`} 
-                />
-              </motion.div>
-            ))}
-          </AnimatePresence>
-        )}
-        
-        {!loading && doctors.length === 0 && (
-          <div className="p-20 text-center text-text-secondary opacity-50 text-sm">
-            No physicians registered yet.
-          </div>
+              {/* Selector Indicator */}
+              {selectedId === doc.id && (
+                <div className="absolute right-4 animate-in fade-in slide-in-from-left-2 duration-300">
+                    <ChevronRight size={16} strokeWidth={3} />
+                </div>
+              )}
+            </button>
+          ))
+        ) : (
+            <div className="py-20 flex flex-col items-center justify-center opacity-20">
+                <UserCircle size={40} strokeWidth={1} className="text-zinc-500" />
+                <p className="mt-3 text-[10px] font-black uppercase tracking-[0.3em]">Registry Empty</p>
+            </div>
         )}
       </div>
     </div>
