@@ -1,10 +1,9 @@
 import React, { useEffect, useRef } from "react";
 import MessageBubble from "./MessageBubble";
 
-export default function ChatWindow({ messages, streamText }) {
+export default function ChatWindow({ messages, streamText, compact }) {
   const scrollRef = useRef(null);
 
-  // 🔥 AUTO SCROLL
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTo({
@@ -17,26 +16,25 @@ export default function ChatWindow({ messages, streamText }) {
   return (
     <div
       ref={scrollRef}
-      className="flex-1 overflow-y-auto px-6 py-6 space-y-4 custom-scrollbar"
+      className={`flex-1 overflow-y-auto ${compact ? "px-4 py-3 space-y-2 max-h-48" : "px-6 py-6 space-y-1"} custom-scrollbar`}
     >
-      {/* ✅ NORMAL MESSAGES */}
+      {/* All completed messages */}
       {messages.map((m, i) => (
         <MessageBubble
           key={i}
-          role={m.role === "user" ? "user" : "bot"}
+          role={m.role}
           text={m.content}
+          action={m.action}
+          data={m.data}
         />
       ))}
 
-      {/* 🔥 STREAMING MESSAGE (Typing Effect) */}
+      {/* Live streaming text (ChatGPT typing effect) */}
       {streamText && (
-        <MessageBubble
-          role="bot"
-          text={streamText}
-        />
+        <MessageBubble role="bot" text={streamText} />
       )}
 
-      {/* SCROLL SPACE */}
+      {/* Scroll anchor */}
       <div className="h-2" />
     </div>
   );
