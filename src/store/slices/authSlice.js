@@ -67,6 +67,9 @@ export const checkAdminAuth = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       const { data } = await apiClient.get("/admin/auth/is-auth");
+      if (data.success === false) {
+        return rejectWithValue(data.message || "Not authenticated");
+      }
       return data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || "Not authenticated");
@@ -80,6 +83,7 @@ export const sendAdminVerifyOtp = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       const { data } = await apiClient.post("/admin/auth/send-verify-otp");
+      if (data.success === false) return rejectWithValue(data.message || "Failed to send OTP");
       return data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || "Failed to send OTP");
@@ -93,6 +97,7 @@ export const verifyAdminAccount = createAsyncThunk(
   async (otp, { rejectWithValue }) => {
     try {
       const { data } = await apiClient.post("/admin/auth/verify-account", { otp });
+      if (data.success === false) return rejectWithValue(data.message || "Verification failed");
       return data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || "Verification failed");
@@ -106,6 +111,7 @@ export const sendAdminResetOtp = createAsyncThunk(
   async (email, { rejectWithValue }) => {
     try {
       const { data } = await apiClient.post("/admin/auth/send-reset-otp", { email });
+      if (data.success === false) return rejectWithValue(data.message || "Failed to send reset OTP");
       return data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || "Failed to send reset OTP");
@@ -119,6 +125,7 @@ export const resetAdminPassword = createAsyncThunk(
   async (resetData, { rejectWithValue }) => {
     try {
       const { data } = await apiClient.post("/admin/auth/reset-password", resetData);
+      if (data.success === false) return rejectWithValue(data.message || "Password reset failed");
       return data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || "Password reset failed");

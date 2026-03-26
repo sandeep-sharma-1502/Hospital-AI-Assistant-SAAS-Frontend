@@ -10,13 +10,16 @@ import {
   Globe,
   Activity,
   User,
-  MoreHorizontal
+  MoreHorizontal,
+  CalendarClock
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import toast, { Toaster } from "react-hot-toast";
 
 import { useAppointments } from "../../features/appointments/hooks/useAppointments";
 import BookAppointmentModal from "../../features/appointments/components/BookAppointmentModal";
+import AppointmentDetailsModal from "../../features/appointments/components/AppointmentDetailsModal";
+import RescheduleModal from "../../features/appointments/components/RescheduleModal";
 import { fetchDoctors } from "../../features/doctors/services/doctorApi";
 
 /* ---------------- SHIMMER LOADER ---------------- */
@@ -32,12 +35,24 @@ const ShimmerRow = () => (
 );
 
 export default function AppointmentsPage() {
-  const { appointments, loading, error, cancel, reload } = useAppointments();
+  const { appointments, loading, error, cancel, updateStatus, reschedule, reload } = useAppointments();
   const [filter, setFilter] = useState("All");
   const [search, setSearch] = useState("");
   const [isBookingOpen, setIsBookingOpen] = useState(false);
+  const [selectedAppointment, setSelectedAppointment] = useState(null);
+  const [rescheduleData, setRescheduleData] = useState(null);
   const [doctors, setDoctors] = useState([]);
   const [isFetchingDoctors, setIsFetchingDoctors] = useState(false);
+
+  const formatTime = (minutes) => {
+    if (minutes == null) return "N/A";
+    const hrs = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    const ampm = hrs >= 12 ? "PM" : "AM";
+    const formattedHrs = hrs % 12 === 0 ? 12 : hrs % 12;
+    const formattedMins = mins.toString().padStart(2, "0");
+    return `${formattedHrs}:${formattedMins} ${ampm}`;
+  };
 
   const openBooking = async () => {
     setIsFetchingDoctors(true);
@@ -223,7 +238,7 @@ export default function AppointmentsPage() {
                         <div className="flex flex-col">
                           <div className="flex items-center gap-2 text-zinc-200 font-black text-[13px] tabular-nums italic group-hover:text-blue-400 transition-colors">
                             <Clock size={12} className="opacity-40" />
-                            {apt.startTime} - {apt.endTime}
+                            {formatTime(apt.startTime)} - {formatTime(apt.endTime)}
                           </div>
                           <span className="text-[9px] font-black text-zinc-600 uppercase tracking-widest mt-1">
                             {new Date(apt.date).toLocaleDateString(undefined, { day: '2-digit', month: 'short', year: 'numeric' })}
@@ -256,7 +271,17 @@ export default function AppointmentsPage() {
                               <X size={14} strokeWidth={3} />
                             </button>
                           )}
-                          <button className="p-3 bg-zinc-950 hover:bg-zinc-800 border border-white/5 text-zinc-600 hover:text-white rounded-2xl transition-all">
+                          <button 
+                            onClick={() => setRescheduleData(apt)}
+                            className="p-3 bg-zinc-950 hover:bg-zinc-800 border border-white/5 text-zinc-600 hover:text-white rounded-2xl transition-all"
+                            title="Reschedule Appointment"
+                          >
+                             <CalendarClock size={14} />
+                          </button>
+                          <button 
+                            onClick={() => setSelectedAppointment(apt)}
+                            className="p-3 bg-zinc-950 hover:bg-zinc-800 border border-white/5 text-zinc-600 hover:text-white rounded-2xl transition-all"
+                          >
                              <MoreHorizontal size={14} />
                           </button>
                         </div>
@@ -308,6 +333,22 @@ export default function AppointmentsPage() {
           </div>
         )}
       </AnimatePresence>
+      
+      {/* DETAILS / SETTINGS MODAL */}
+      <AppointmentDetailsModal
+        isOpen={!!selectedAppointment}
+        onClose={() => setSelectedAppointment(null)}
+        appointment={selectedAppointment}
+        onUpdateStatus={updateStatus}
+      />
+
+      {/* RESCHEDULE MODAL */}
+      <RescheduleModal
+        isOpen={!!rescheduleData}
+        onClose={() => setRescheduleData(null)}
+        appointment={rescheduleData}
+        onReschedule={reschedule}
+      />
     </div>
   );
 }

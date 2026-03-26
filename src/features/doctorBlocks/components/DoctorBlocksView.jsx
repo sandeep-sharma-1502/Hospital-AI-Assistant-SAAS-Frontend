@@ -12,7 +12,7 @@ const formatTime = (minutes) => {
   return `${displayH.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')} ${period}`;
 };
 
-export default function DoctorBlocksView({ doctorId, onOpenModal }) {
+export default function DoctorBlocksView({ doctorId, onOpenModal, onEditClick, refreshTrigger }) {
   const [blocks, setBlocks] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -26,7 +26,7 @@ export default function DoctorBlocksView({ doctorId, onOpenModal }) {
     } finally {
       setLoading(false);
     }
-  }, [doctorId]);
+  }, [doctorId, refreshTrigger]); // Added refreshTrigger
 
   useEffect(() => { fetchBlocks(); }, [fetchBlocks]);
 
@@ -90,14 +90,23 @@ export default function DoctorBlocksView({ doctorId, onOpenModal }) {
                 </div>
               </div>
 
-              {/* Action Button */}
-              <button 
-                onClick={() => handleDelete(block.id)} 
-                className="p-3 text-zinc-600 hover:text-rose-500 hover:bg-rose-500/10 rounded-xl transition-all opacity-0 group-hover:opacity-100"
-                title="Lift Restriction"
-              >
-                <Trash2 size={16} />
-              </button>
+              {/* Action Buttons */}
+              <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <button 
+                  onClick={() => onEditClick(block)} 
+                  className="p-3 text-zinc-600 hover:text-blue-500 hover:bg-blue-500/10 rounded-xl transition-all"
+                  title="Modify Restriction"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/><path d="m15 5 4 4"/></svg>
+                </button>
+                <button 
+                  onClick={() => handleDelete(block.id)} 
+                  className="p-3 text-zinc-600 hover:text-rose-500 hover:bg-rose-500/10 rounded-xl transition-all"
+                  title="Lift Restriction"
+                >
+                  <Trash2 size={16} />
+                </button>
+              </div>
             </div>
           ))
         ) : (

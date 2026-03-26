@@ -146,6 +146,39 @@ export const useAssistant = () => {
         // ── Tool/Action results (structured UI data) ──
         socket.on("ai_action", ({ action, data }) => {
             setMessages((prev) => [...prev, { role: "action", action, data }]);
+
+            if (action === "BOOK_APPOINTMENT" && data && data.paymentOrder) {
+                const options = {
+                    key: import.meta.env.VITE_RAZORPAY_KEY_ID || "rzp_test_xxxxxx", // Default test key
+                    amount: data.paymentOrder.amount,
+                    currency: "INR",
+                    name: "MedFlow Hospital",
+                    description: "Appointment Booking Fee",
+                    order_id: data.paymentOrder.id,
+                    handler: function (response) {
+                        console.log("Payment Successful!", response);
+                        setMessages((prev) => [...prev, { role: "bot", content: "Payment successful! Your appointment is confirmed." }]);
+                    },
+                    prefill: {
+                        name: data.appointment?.patientId ? `Patient #${data.appointment.patientId}` : "Patient",
+                        contact: "9999999999" // Can be extracted if patient data is populated
+                    },
+                    theme: {
+                        color: "#2563eb"
+                    }
+                };
+                
+                try {
+                    const rzp = new window.Razorpay(options);
+                    rzp.on("payment.failed", function (response) {
+                        console.error("Payment Failed:", response.error);
+                        setMessages((prev) => [...prev, { role: "bot", content: "Payment failed. Please try booking again." }]);
+                    });
+                    rzp.open();
+                } catch (err) {
+                    console.error("Failed to open Razorpay:", err);
+                }
+            }
         });
 
         socket.on("ai_error", ({ message }) => {

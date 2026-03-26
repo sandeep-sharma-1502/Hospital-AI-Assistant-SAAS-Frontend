@@ -3,7 +3,8 @@ import toast from "react-hot-toast";
 
 import {
   fetchAvailableSlots,
-  createAppointment
+  createAppointment,
+  checkBookingStatus
 } from "../services/appointmentApi";
 
 export const useBookAppointment = () => {
@@ -61,7 +62,7 @@ export const useBookAppointment = () => {
   };
 
   /**
-   * Confirm booking (UPDATED ✅)
+   * Confirm booking (Queue + Polling ✅)
    */
   const confirmBooking = async (form) => {
 
@@ -79,25 +80,50 @@ export const useBookAppointment = () => {
 
       setLoading(true);
 
-      await createAppointment({
+      const data = await createAppointment({
         slotId: slot.id,
         patientId: form.patientId
       });
 
-      toast.success("Appointment booked successfully");
+      if (data?.status === "QUEUED" && data?.trackingId) {
+        toast.loading("Booking in progress...", { id: "booking-toast" });
 
-      setStep(6);
-
-      window.dispatchEvent(
-        new Event("appointment-booked")
-      );
+        let attempts = 0;
+        const poll = setInterval(async () => {
+          attempts++;
+          try {
+             const statusData = await checkBookingStatus(data.trackingId);
+             
+             if (statusData?.status === "SUCCESS") {
+                clearInterval(poll);
+                toast.success("Appointment booked successfully", { id: "booking-toast" });
+                setStep(6);
+                window.dispatchEvent(new Event("appointment-booked"));
+                setLoading(false);
+             } else if (statusData?.status === "FAILED") {
+                clearInterval(poll);
+                toast.error(statusData?.error || "Booking failed", { id: "booking-toast" });
+                setLoading(false);
+             } else if (attempts > 30) {
+                // timeout after 60 seconds
+                clearInterval(poll);
+                toast.error("Booking timed out", { id: "booking-toast" });
+                setLoading(false);
+             }
+          } catch(e) {
+             console.error("Polling error", e);
+          }
+        }, 2000); 
+      } else {
+         toast.success("Appointment booked successfully");
+         setStep(6);
+         window.dispatchEvent(new Event("appointment-booked"));
+         setLoading(false);
+      }
 
     } catch (err) {
 
       toast.error(err.message || "Booking failed");
-
-    } finally {
-
       setLoading(false);
 
     }

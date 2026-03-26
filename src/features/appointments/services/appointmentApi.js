@@ -31,6 +31,22 @@ export const createAppointment = async ({
 
 };
 
+/**
+ * Check booking status
+ */
+export const checkBookingStatus = async (trackingId) => {
+  const res = await apiClient.get(`/appointments/status/${trackingId}`);
+  return res.data?.data;
+};
+
+/**
+ * Update appointment
+ */
+export const updateAppointment = async (id, data) => {
+  const res = await apiClient.patch(`/appointments/${id}`, data);
+  return res.data?.data;
+};
+
 
 /**
  * Cancel appointment

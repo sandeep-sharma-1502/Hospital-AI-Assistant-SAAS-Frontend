@@ -31,6 +31,7 @@ export const registerUser = createAsyncThunk(
   async (userData, { rejectWithValue }) => {
     try {
       const { data } = await apiClient.post("/auth/register", userData);
+      if (data.success === false) return rejectWithValue(data.message || "Registration failed");
       return data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || "Registration failed");
@@ -60,6 +61,7 @@ export const sendVerifyOtp = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       const { data } = await apiClient.post("/auth/send-verify-otp");
+      if (data.success === false) return rejectWithValue(data.message || "Failed to send OTP");
       return data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || "Failed to send OTP");
@@ -73,6 +75,7 @@ export const verifyAccount = createAsyncThunk(
   async (otp, { rejectWithValue }) => {
     try {
       const { data } = await apiClient.post("/auth/verify-account", { otp });
+      if (data.success === false) return rejectWithValue(data.message || "Verification failed");
       return data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || "Verification failed");
@@ -86,6 +89,7 @@ export const sendResetOtp = createAsyncThunk(
   async (email, { rejectWithValue }) => {
     try {
       const { data } = await apiClient.post("/auth/send-reset-otp", { email });
+      if (data.success === false) return rejectWithValue(data.message || "Failed to send reset OTP");
       return data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || "Failed to send reset OTP");
@@ -99,6 +103,7 @@ export const resetPassword = createAsyncThunk(
   async (resetData, { rejectWithValue }) => {
     try {
       const { data } = await apiClient.post("/auth/reset-password", resetData);
+      if (data.success === false) return rejectWithValue(data.message || "Password reset failed");
       return data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || "Password reset failed");
@@ -112,6 +117,7 @@ export const checkAuth = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       const { data } = await apiClient.get("/auth/is-auth");
+      if (data.success === false) return rejectWithValue(data.message || "Not authenticated");
       return data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || "Not authenticated");
@@ -139,6 +145,7 @@ export const logoutUser = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       const { data } = await apiClient.post("/auth/logout");
+      if (data.success === false) return rejectWithValue(data.message || "Logout failed");
       return data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || "Logout failed");

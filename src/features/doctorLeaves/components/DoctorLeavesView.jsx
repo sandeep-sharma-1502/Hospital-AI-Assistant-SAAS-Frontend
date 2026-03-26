@@ -3,7 +3,7 @@ import { Coffee, Trash2, Calendar as CalIcon, Loader2, Plus, ArrowRight } from "
 import { getDoctorLeaves, deleteDoctorLeave } from "../services/doctorLeaveApi";
 import toast from "react-hot-toast";
 
-export default function DoctorLeavesView({ doctorId, onOpenModal }) {
+export default function DoctorLeavesView({ doctorId, onOpenModal, onEditClick, refreshTrigger }) {
   const [leaves, setLeaves] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -17,7 +17,7 @@ export default function DoctorLeavesView({ doctorId, onOpenModal }) {
     } finally {
       setLoading(false);
     }
-  }, [doctorId]);
+  }, [doctorId, refreshTrigger]); // Added refreshTrigger
 
   useEffect(() => { fetchLeaves(); }, [fetchLeaves]);
 
@@ -94,14 +94,23 @@ export default function DoctorLeavesView({ doctorId, onOpenModal }) {
                 </div>
               </div>
 
-              {/* Action Button */}
-              <button 
-                onClick={() => handleDelete(leave.id)} 
-                className="p-3 text-zinc-600 hover:text-rose-500 hover:bg-rose-500/10 rounded-xl transition-all opacity-0 group-hover:opacity-100"
-                title="Cancel Leave"
-              >
-                <Trash2 size={16} />
-              </button>
+              {/* Action Buttons */}
+              <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <button 
+                  onClick={() => onEditClick(leave)} 
+                  className="p-3 text-zinc-600 hover:text-amber-500 hover:bg-amber-500/10 rounded-xl transition-all"
+                  title="Modify Leave"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/><path d="m15 5 4 4"/></svg>
+                </button>
+                <button 
+                  onClick={() => handleDelete(leave.id)} 
+                  className="p-3 text-zinc-600 hover:text-rose-500 hover:bg-rose-500/10 rounded-xl transition-all"
+                  title="Cancel Leave"
+                >
+                  <Trash2 size={16} />
+                </button>
+              </div>
             </div>
           ))
         ) : (

@@ -7,6 +7,7 @@ export default function DoctorBlockModal({ doctor, isOpen, onClose, onSuccess, e
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     reason: "",
+    blockType: "ADMIN",
     startTime: "",
     endTime: "",
   });
@@ -15,11 +16,12 @@ export default function DoctorBlockModal({ doctor, isOpen, onClose, onSuccess, e
     if (editData && isOpen) {
       setFormData({
         reason: editData.reason || "",
+        blockType: editData.blockType || "ADMIN",
         startTime: editData.startTime || "",
         endTime: editData.endTime || "",
       });
     } else {
-      setFormData({ reason: "", startTime: "", endTime: "" });
+      setFormData({ reason: "", blockType: "ADMIN", startTime: "", endTime: "" });
     }
   }, [editData, isOpen]);
 
@@ -27,11 +29,12 @@ export default function DoctorBlockModal({ doctor, isOpen, onClose, onSuccess, e
     if (e) e.preventDefault();
     setIsSubmitting(true);
     try {
+      const payload = { doctorId: doctor.id, ...formData };
       if (editData) {
-        await updateDoctorBlock(editData.id, formData);
+        await updateDoctorBlock(editData.id, payload);
         toast.success("Restriction period updated");
       } else {
-        await createDoctorBlock(doctor.id, formData);
+        await createDoctorBlock(payload);
         toast.success("Schedule successfully blocked");
       }
       onSuccess();
@@ -88,6 +91,22 @@ export default function DoctorBlockModal({ doctor, isOpen, onClose, onSuccess, e
                 />
                 <AlertTriangle className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-800" size={16} />
             </div>
+
+          {/* Block Type Selection */}
+          <div className="space-y-2">
+            <label className="text-[10px] font-black uppercase text-zinc-500 ml-1 tracking-widest">Block Category</label>
+            <select
+              className="w-full h-14 px-5 rounded-2xl bg-zinc-900 border border-white/5 font-bold text-sm text-white outline-none focus:border-rose-500/40 transition-all [color-scheme:dark] cursor-pointer appearance-none"
+              value={formData.blockType}
+              onChange={(e) => setFormData({...formData, blockType: e.target.value})}
+            >
+              <option value="ADMIN">Administrative</option>
+              <option value="SURGERY">Surgery</option>
+              <option value="MEETING">Meeting / Conference</option>
+              <option value="PERSONAL">Personal</option>
+              <option value="EMERGENCY">Emergency</option>
+            </select>
+          </div>
           </div>
 
           {/* Time Grid */}

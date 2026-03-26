@@ -4,12 +4,14 @@ import {
   X, User, Stethoscope, Settings, ShieldCheck, 
   Loader2, Camera, Video, Check, ChevronRight, AlertCircle
 } from "lucide-react";
-import { createDoctor } from "../services/doctorApi";
+import { createDoctor, updateDoctor } from "../services/doctorApi";
 import { useDepartments } from "../../departments/hooks/useDepartments";
 import toast from "react-hot-toast";
 import { uploadImageToCloudinary } from "../../../services/cloudinary";
 
-export default function DoctorForm({ isOpen, onClose, onDoctorCreated }) {
+import { useEffect } from "react";
+
+export default function DoctorForm({ isOpen, onClose, onSuccess, editData }) {
   const { departments, loading: deptsLoading } = useDepartments();
   
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -36,6 +38,41 @@ export default function DoctorForm({ isOpen, onClose, onDoctorCreated }) {
     isActive: true,
     isAvailable: true
   });
+
+  useEffect(() => {
+    if (isOpen) {
+      if (editData) {
+        setFormData({
+          name: editData.name || "",
+          email: editData.email || "",
+          phone: editData.phone || "",
+          departmentId: editData.departmentId || "",
+          specialization: editData.specialization || "",
+          qualification: editData.qualification || "",
+          experienceYears: editData.experienceYears || "",
+          consultationFee: editData.consultationFee || "",
+          slotDuration: editData.slotDuration || 15,
+          maxPatientsPerDay: editData.maxPatientsPerDay || 20,
+          licenseNumber: editData.licenseNumber || "",
+          bio: editData.bio || "",
+          profileImage: editData.profileImage || "",
+          supportsVideoConsult: editData.supportsVideoConsult || false,
+          isActive: editData.isActive ?? true,
+          isAvailable: editData.isAvailable ?? true
+        });
+      } else {
+        setFormData({
+          name: "", email: "", phone: "", departmentId: "", specialization: "",
+          qualification: "", experienceYears: "", consultationFee: "",
+          slotDuration: 15, maxPatientsPerDay: 20, licenseNumber: "", bio: "",
+          profileImage: "", supportsVideoConsult: false, isActive: true, isAvailable: true
+        });
+      }
+      setImageFile(null);
+      setErrors({});
+      setActiveSection("personal");
+    }
+  }, [editData, isOpen]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -85,9 +122,15 @@ export default function DoctorForm({ isOpen, onClose, onDoctorCreated }) {
         slug: formData.name.toLowerCase().trim().replace(/ /g, '-').replace(/[^\w-]+/g, '')
       };
 
-      await createDoctor(payload);
-      toast.success("Medical Professional Onboarded");
-      onDoctorCreated();
+      if (editData) {
+        await updateDoctor(editData.id, payload);
+        toast.success("Medical Professional Updated");
+      } else {
+        await createDoctor(payload);
+        toast.success("Medical Professional Onboarded");
+      }
+      
+      if (onSuccess) onSuccess();
       onClose();
     } catch (err) {
       toast.error(err?.message || "Registry Update Failed");
@@ -256,7 +299,7 @@ export default function DoctorForm({ isOpen, onClose, onDoctorCreated }) {
                 className="flex items-center gap-3 px-10 py-4 bg-emerald-600 text-white rounded-[20px] text-[11px] font-black uppercase tracking-widest shadow-2xl shadow-emerald-500/10 active:scale-95 transition-all disabled:opacity-50"
             >
               {isSubmitting ? <Loader2 size={16} className="animate-spin" /> : activeSection === 'clinical' ? <Check size={16} strokeWidth={3} /> : <ChevronRight size={16} strokeWidth={3} />}
-              <span>{activeSection === 'clinical' ? 'Complete Onboarding' : 'Continue'}</span>
+              <span>{activeSection === 'clinical' ? (editData ? 'Save Changes' : 'Complete Onboarding') : 'Continue'}</span>
             </button>
           </div>
         </div>

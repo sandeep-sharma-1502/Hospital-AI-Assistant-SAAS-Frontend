@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { UserPlus, Calendar, Coffee, Ban, User, Activity, Loader2 } from "lucide-react";
+import { UserPlus, Calendar, Coffee, Ban, User, Activity, Loader2, Settings } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 // Components
@@ -27,11 +27,18 @@ export default function DoctorsPage() {
   const { doctors, isLoading, refreshDoctors } = useDoctors();
   const [selectedDoctor, setSelectedDoctor] = useState(null);
   const [activeTab, setActiveTab] = useState("profile");
+  const [refreshTrigger, setRefreshTrigger] = useState(0); // Trigger for tabs
+
+  const handleSuccess = () => {
+    refreshDoctors();
+    setRefreshTrigger(t => t + 1);
+  };
 
   // --- EDIT & MODAL STATES ---
   const [editScheduleData, setEditScheduleData] = useState(null);
   const [editBlockData, setEditBlockData] = useState(null);
   const [editLeaveData, setEditLeaveData] = useState(null);
+  const [editDoctorData, setEditDoctorData] = useState(null);
 
   const [modals, setModals] = useState({ 
     schedule: false, 
@@ -45,6 +52,7 @@ export default function DoctorsPage() {
       if (type === 'schedule') setEditScheduleData(null);
       if (type === 'block') setEditBlockData(null);
       if (type === 'leave') setEditLeaveData(null);
+      if (type === 'onboard') setEditDoctorData(null);
     }
     setModals(prev => ({ ...prev, [type]: state }));
   };
@@ -112,8 +120,12 @@ export default function DoctorsPage() {
               {/* Header Section */}
               <div className="p-8 border-b border-white/[0.04] flex justify-between items-center bg-white/[0.01] backdrop-blur-xl">
                 <div className="flex gap-6 items-center">
-                  <div className="w-16 h-16 rounded-[22px] bg-gradient-to-br from-blue-600 to-indigo-700 flex items-center justify-center text-white text-2xl font-black shadow-[0_0_20px_rgba(37,99,235,0.3)] uppercase">
-                    {selectedDoctor.name.charAt(0)}
+                  <div className="w-16 h-16 rounded-[22px] bg-gradient-to-br from-blue-600 to-indigo-700 flex items-center justify-center text-white text-2xl font-black shadow-[0_0_20px_rgba(37,99,235,0.3)] uppercase overflow-hidden shrink-0">
+                    {selectedDoctor.profileImage ? (
+                      <img src={selectedDoctor.profileImage} alt={selectedDoctor.name} className="w-full h-full object-cover" />
+                    ) : (
+                      selectedDoctor.name.charAt(0)
+                    )}
                   </div>
                   <div>
                     <h2 className="text-2xl font-black text-white tracking-tight">{selectedDoctor.name}</h2>
@@ -124,43 +136,54 @@ export default function DoctorsPage() {
                   </div>
                 </div>
                 
-                {/* TAB NAVIGATION */}
-                <nav className="flex bg-[#09090b] p-1 rounded-[20px] border border-white/[0.05] relative">
-                  {tabs.map(tab => {
-                    const isActive = activeTab === tab.id;
-                    return (
-                      <button
-                        key={tab.id}
-                        onClick={() => setActiveTab(tab.id)}
-                        className={`group relative flex items-center gap-2 px-6 py-2.5 rounded-[16px] text-[10px] font-black transition-colors duration-300 z-10 ${
-                          isActive ? "text-blue-500" : "text-zinc-500 hover:text-zinc-300"
-                        }`}
-                      >
-                        {isActive && (
-                          <motion.div
-                            layoutId="activeTabPill"
-                            className="absolute inset-0 bg-white/[0.05] border border-white/10 rounded-[16px] shadow-lg shadow-black/20"
-                            transition={{ type: "spring", stiffness: 400, damping: 30 }}
-                          />
-                        )}
-                        <span className="relative z-20 flex items-center gap-2 uppercase">
-                          {tab.icon} {tab.label}
-                        </span>
-                      </button>
-                    );
-                  })}
-                </nav>
+                {/* TAB NAVIGATION & ACTIONS */}
+                <div className="flex items-center gap-4">
+                  <nav className="flex bg-[#09090b] p-1 rounded-[20px] border border-white/[0.05] relative">
+                    {tabs.map(tab => {
+                      const isActive = activeTab === tab.id;
+                      return (
+                        <button
+                          key={tab.id}
+                          onClick={() => setActiveTab(tab.id)}
+                          className={`group relative flex items-center gap-2 px-6 py-2.5 rounded-[16px] text-[10px] font-black transition-colors duration-300 z-10 ${
+                            isActive ? "text-blue-500" : "text-zinc-500 hover:text-zinc-300"
+                          }`}
+                        >
+                          {isActive && (
+                            <motion.div
+                              layoutId="activeTabPill"
+                              className="absolute inset-0 bg-white/[0.05] border border-white/10 rounded-[16px] shadow-lg shadow-black/20"
+                              transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                            />
+                          )}
+                          <span className="relative z-20 flex items-center gap-2 uppercase">
+                            {tab.icon} {tab.label}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </nav>
+
+                  <button
+                    onClick={() => { setEditDoctorData(selectedDoctor); toggleModal('onboard', true); }}
+                    className="p-3 bg-white/[0.03] hover:bg-emerald-500/10 hover:text-emerald-500 border border-white/[0.05] hover:border-emerald-500/30 text-zinc-500 rounded-[16px] transition-all shadow-sm"
+                    title="Edit Doctor Info"
+                  >
+                    <Settings size={18} />
+                  </button>
+                </div>
               </div>
 
               {/* Dynamic Content Area */}
               <div className="flex-1 overflow-y-auto p-10 custom-scrollbar bg-gradient-to-b from-transparent to-black/10">
                 <div className="max-w-5xl mx-auto">
-                  {activeTab === "profile" && <DoctorProfileView doctor={selectedDoctor} onUpdate={refreshDoctors} />}
+                  {activeTab === "profile" && <DoctorProfileView doctor={selectedDoctor} onUpdate={handleSuccess} />}
                   {activeTab === "schedule" && (
                     <DoctorScheduleView 
                       doctorId={selectedDoctor.id} 
                       onOpenModal={() => toggleModal('schedule', true)} 
                       onEditClick={handleEditSchedule}
+                      refreshTrigger={refreshTrigger}
                     />
                   )}
                   {activeTab === "blocks" && (
@@ -168,6 +191,7 @@ export default function DoctorsPage() {
                       doctorId={selectedDoctor.id} 
                       onOpenModal={() => toggleModal('block', true)} 
                       onEditClick={handleEditBlock}
+                      refreshTrigger={refreshTrigger}
                     />
                   )}
                   {activeTab === "leaves" && (
@@ -175,6 +199,7 @@ export default function DoctorsPage() {
                       doctorId={selectedDoctor.id} 
                       onOpenModal={() => toggleModal('leave', true)} 
                       onEditClick={handleEditLeave}
+                      refreshTrigger={refreshTrigger}
                     />
                   )}
                 </div>
@@ -196,6 +221,7 @@ export default function DoctorsPage() {
           refreshDoctors();
           toggleModal('onboard', false);
         }}
+        editData={editDoctorData}
       />
 
       {/* 2. Operational Modals (Requires Selected Doctor) */}
@@ -205,21 +231,21 @@ export default function DoctorsPage() {
             doctor={selectedDoctor} 
             isOpen={modals.schedule} 
             onClose={() => toggleModal('schedule', false)} 
-            onSuccess={refreshDoctors} 
+            onSuccess={handleSuccess} 
             editData={editScheduleData}
           />
           <DoctorBlockModal 
             doctor={selectedDoctor} 
             isOpen={modals.block} 
             onClose={() => toggleModal('block', false)} 
-            onSuccess={refreshDoctors}
+            onSuccess={handleSuccess}
             editData={editBlockData}
           />
           <DoctorLeaveModal 
             doctor={selectedDoctor} 
             isOpen={modals.leave} 
             onClose={() => toggleModal('leave', false)} 
-            onSuccess={refreshDoctors}
+            onSuccess={handleSuccess}
             editData={editLeaveData}
           />
         </>

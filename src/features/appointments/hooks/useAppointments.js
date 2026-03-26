@@ -3,8 +3,10 @@ import { useEffect, useState } from "react";
 import {
   fetchAppointments,
   cancelAppointment,
-  rescheduleAppointment
+  rescheduleAppointment,
+  updateAppointment
 } from "../services/appointmentApi";
+import toast from "react-hot-toast";
 
 export const useAppointments = () => {
 
@@ -87,6 +89,21 @@ export const useAppointments = () => {
   };
 
   /**
+   * Update Status
+   */
+  const updateStatus = async (id, data) => {
+    try {
+      await updateAppointment(id, data);
+      await loadAppointments();
+      toast.success("Status Updated Successfully");
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to update status");
+      throw err;
+    }
+  };
+
+  /**
    * Initial load + booking refresh
    */
   useEffect(() => {
@@ -119,6 +136,7 @@ export const useAppointments = () => {
 
     cancel,
     reschedule,
+    updateStatus,
 
     reload: loadAppointments
 

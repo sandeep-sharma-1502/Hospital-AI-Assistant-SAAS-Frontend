@@ -1,123 +1,114 @@
 import { useState, useEffect } from "react";
-import { fetchAvailableSlots } from "../services/appointmentApi";
-import { Calendar, Clock, X, Loader2, ChevronRight } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { X, CalendarClock, Activity } from "lucide-react";
+import DateSelect from "./DateSelect";
+import SlotList from "./SlotList";
+import { fetchAvailableSlots } from "../services/appointmentApi";
+import toast from "react-hot-toast";
 
-// Time Formatter Helper (Minutes to 10:30 AM)
-const formatTime = (minutes) => {
-  const h = Math.floor(minutes / 60);
-  const m = minutes % 60;
-  const ampm = h >= 12 ? 'PM' : 'AM';
-  const hh = h % 12 || 12;
-  return `${hh}:${m < 10 ? '0' : ''}${m} ${ampm}`;
-};
-
-export default function RescheduleModal({
-  appointment,
-  doctorId,
-  onClose,
-  onConfirm
-}) {
+export default function RescheduleModal({ isOpen, onClose, appointment, onReschedule }) {
   const [date, setDate] = useState("");
   const [slots, setSlots] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [step, setStep] = useState(1);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Auto-load slots when date changes
   useEffect(() => {
-    if (date) {
-      const loadSlots = async () => {
-        setLoading(true);
-        try {
-          const data = await fetchAvailableSlots(doctorId, date);
-          setSlots(data);
-        } catch (error) {
-          console.error("Slot fetch error:", error);
-        } finally {
-          setLoading(false);
-        }
-      };
-      loadSlots();
+    if (isOpen && appointment) {
+      setDate("");
+      setSlots([]);
+      setStep(1);
     }
-  }, [date, doctorId]);
+  }, [isOpen, appointment]);
+
+  const handleNext = async () => {
+    if (!date || !appointment?.doctorId) return;
+    
+    setLoading(true);
+    setStep(2);
+    try {
+      const data = await fetchAvailableSlots(appointment.doctorId, date);
+      setSlots(data || []);
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to fetch slots");
+      setStep(1);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSlotSelect = async (slot) => {
+    if (isSubmitting) return;
+
+    if (!window.confirm("Are you sure you want to reschedule to this time?")) return;
+
+    setIsSubmitting(true);
+    try {
+      await onReschedule(appointment.id, slot.id);
+      toast.success("Appointment Rescheduled Successfully!");
+      onClose();
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to reschedule");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  if (!isOpen || !appointment) return null;
 
   return (
-    <div className="bg-[#0c0c0e] border border-white/10 rounded-[32px] overflow-hidden shadow-2xl max-w-md w-full relative font-sans">
-      {/* Header */}
-      <div className="p-6 border-b border-white/[0.05] flex justify-between items-center bg-white/[0.01]">
-        <div>
-          <h2 className="text-xl font-black italic uppercase tracking-tighter text-white">
-            Reschedule <span className="text-blue-500">Node</span>
-          </h2>
-          <p className="text-[9px] font-black text-zinc-500 uppercase tracking-widest mt-1">
-            Patient: {appointment?.patient?.name || "Unknown"}
-          </p>
-        </div>
-        <button 
-          onClick={onClose}
-          className="p-2 hover:bg-white/5 rounded-xl text-zinc-500 hover:text-white transition-all"
-        >
-          <X size={20} />
-        </button>
-      </div>
+    <div className="fixed inset-0 z-[150] flex justify-center items-center p-4 bg-black/80 backdrop-blur-xl font-sans text-white">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95, y: 20 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.95, y: -20 }}
+        className="bg-[#09090b] border border-white/5 w-full max-w-lg rounded-[40px] shadow-[0_32px_80px_rgba(0,0,0,0.5)] flex flex-col overflow-hidden relative"
+      >
+        <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-indigo-600/5 blur-[120px] rounded-full pointer-events-none" />
 
-      <div className="p-6 space-y-6">
-        {/* Date Input Section */}
-        <div className="space-y-3">
-          <label className="text-[10px] font-black uppercase text-zinc-500 tracking-widest ml-1 flex items-center gap-2">
-            <Calendar size={12} className="text-blue-500" /> Select New Vector Date
-          </label>
-          <input
-            type="date"
-            value={date}
-            min={new Date().toISOString().split("T")[0]}
-            onChange={(e) => setDate(e.target.value)}
-            className="w-full bg-zinc-950 border border-white/5 rounded-2xl p-4 text-sm text-white focus:outline-none focus:border-blue-500/50 transition-all font-bold"
-          />
-        </div>
-
-        {/* Slots Grid */}
-        <div className="space-y-3">
-          <div className="flex justify-between items-center px-1">
-            <label className="text-[10px] font-black uppercase text-zinc-500 tracking-widest flex items-center gap-2">
-              <Clock size={12} className="text-blue-500" /> Available Time Slots
-            </label>
-            {loading && <Loader2 size={14} className="animate-spin text-blue-500" />}
+        <div className="px-8 py-6 border-b border-white/[0.03] flex justify-between items-center bg-zinc-900/40 backdrop-blur-md shrink-0 z-10">
+          <div className="flex items-center gap-3">
+            <Activity size={16} className="text-indigo-500 animate-pulse" />
+            <span className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.3em]">Reschedule Visit</span>
           </div>
-
-          <div className="grid grid-cols-2 gap-3 max-h-[240px] overflow-y-auto pr-2 custom-scrollbar">
-            <AnimatePresence mode="popLayout">
-              {slots.length > 0 ? (
-                slots.map((slot, idx) => (
-                  <motion.button
-                    key={slot.id}
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: idx * 0.03 }}
-                    onClick={() => onConfirm(appointment.id, slot.id)}
-                    className="group relative flex items-center justify-between p-4 bg-zinc-950 border border-white/5 rounded-2xl hover:border-blue-500/50 hover:bg-blue-500/5 transition-all text-left"
-                  >
-                    <span className="text-xs font-black text-zinc-300 group-hover:text-blue-400 tabular-nums uppercase italic">
-                      {formatTime(slot.startTime)}
-                    </span>
-                    <ChevronRight size={14} className="text-zinc-700 group-hover:text-blue-500 group-hover:translate-x-1 transition-all" />
-                  </motion.button>
-                ))
-              ) : !loading && date ? (
-                <div className="col-span-2 py-8 text-center border border-dashed border-white/5 rounded-3xl">
-                  <p className="text-[10px] font-black text-zinc-700 uppercase tracking-widest">No Slots Detected</p>
-                </div>
-              ) : null}
-            </AnimatePresence>
-          </div>
+          <button onClick={onClose} disabled={isSubmitting} className="w-10 h-10 flex items-center justify-center bg-white/[0.03] hover:bg-rose-500/10 hover:text-rose-500 rounded-xl transition-all text-zinc-500">
+            <X size={18} />
+          </button>
         </div>
-      </div>
 
-      {/* Footer System Notice */}
-      <div className="p-4 bg-zinc-950/50 border-t border-white/[0.03] text-center">
-        <p className="text-[8px] font-black text-zinc-800 uppercase tracking-[0.4em] italic">
-          Manual Override Registry // MedFlow OS
-        </p>
-      </div>
+        <div className="flex-1 p-8 overflow-y-auto custom-scrollbar z-10">
+           <div className="mb-6 p-4 rounded-2xl bg-indigo-500/5 border border-indigo-500/10 text-center">
+             <CalendarClock size={24} className="mx-auto text-indigo-500 mb-2" />
+             <h3 className="text-sm font-black uppercase italic tracking-widest text-indigo-400">Reassign Temporal Vector</h3>
+             <p className="text-[10px] text-zinc-500 uppercase mt-1">For Patient // {appointment.patient?.name}</p>
+           </div>
+
+           <AnimatePresence mode="wait">
+             {step === 1 && (
+               <motion.div key="step1" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
+                 <DateSelect value={date} onChange={setDate} onNext={handleNext} />
+               </motion.div>
+             )}
+             
+             {step === 2 && (
+               <motion.div key="step2" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }}>
+                 <button onClick={() => setStep(1)} className="text-[10px] font-black text-zinc-500 hover:text-white uppercase tracking-widest mb-4 transition-colors">
+                   ← Back to Date Selection
+                 </button>
+                 <SlotList loading={loading} slots={slots} onSelect={handleSlotSelect} />
+                 {isSubmitting && (
+                   <div className="mt-4 flex flex-col items-center">
+                     <div className="w-4 h-4 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+                     <p className="text-[8px] font-black text-indigo-500 uppercase tracking-widest mt-2 mt-2 italic">Confirming Assignment...</p>
+                   </div>
+                 )}
+               </motion.div>
+             )}
+           </AnimatePresence>
+        </div>
+      </motion.div>
     </div>
   );
 }
