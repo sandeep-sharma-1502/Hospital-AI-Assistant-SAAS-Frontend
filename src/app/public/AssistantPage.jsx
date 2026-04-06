@@ -11,9 +11,9 @@ export default function AssistantPage() {
   const dispatch = useDispatch();
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-zinc-950 flex flex-col">
+    <div className="h-[100dvh] bg-gray-50 dark:bg-zinc-950 flex flex-col overflow-hidden">
       {/* Header */}
-      <header className="h-16 px-6 flex items-center justify-between bg-white dark:bg-zinc-900 border-b border-gray-200 dark:border-zinc-800 shrink-0">
+      <header className="h-14 sm:h-16 px-4 sm:px-6 flex items-center justify-between bg-white dark:bg-zinc-900 border-b border-gray-200 dark:border-zinc-800 shrink-0">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold">H</div>
           <span className="font-bold text-gray-800 dark:text-white uppercase tracking-wider text-sm">Hospital Assistant</span>

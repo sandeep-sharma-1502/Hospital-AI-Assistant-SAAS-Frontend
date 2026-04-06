@@ -2,9 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence, LayoutGroup } from 'framer-motion';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { 
-  LayoutDashboard, MessageSquare, Database, CalendarCheck, 
-  LogOut, ChevronLeft, ChevronRight, Stethoscope, Layers, Activity 
+import {
+  LayoutDashboard, MessageSquare, Database, CalendarCheck,
+  LogOut, ChevronLeft, ChevronRight, Stethoscope, Layers, Activity
 } from 'lucide-react';
 
 import { logoutAdmin } from '../../store/slices/authSlice';
@@ -47,26 +47,26 @@ export default function Sidebar() {
       initial={false}
       animate={{ width: isCollapsed ? 88 : 280 }}
       transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-      className="h-screen bg-[#09090b] flex flex-col sticky top-0 border-r border-white/[0.04] z-50 overflow-hidden"
+      className="h-screen bg-slate-50 dark:bg-[#09090b] flex flex-col sticky top-0 border-r border-slate-200 dark:border-white/[0.04] z-50 overflow-hidden"
     >
       {/* ---------------- BRAND HEADER ---------------- */}
-      <div className="h-20 px-6 flex items-center gap-4 border-b border-white/[0.04] shrink-0 bg-[#0c0c0e]/50">
-        <div className="min-w-[42px] w-[42px] h-[42px] bg-gradient-to-br from-blue-600 to-indigo-700 rounded-2xl flex items-center justify-center text-white shadow-[0_0_20px_rgba(37,99,235,0.3)] shrink-0">
+      <div className="h-20 px-6 flex items-center gap-4 border-b border-slate-200 dark:border-white/[0.04] shrink-0 bg-slate-50/50 dark:bg-[#0c0c0e]/50">
+        <div className="min-w-[42px] w-[42px] h-[42px] bg-gradient-to-br from-blue-600 to-indigo-700 rounded-2xl flex items-center justify-center text-slate-900 dark:text-white shadow-[0_0_20px_rgba(37,99,235,0.3)] shrink-0">
           <Activity size={22} strokeWidth={2.5} />
         </div>
         <AnimatePresence>
           {!isCollapsed && (
-            <motion.div 
-              initial={{ opacity: 0, x: -10 }} 
+            <motion.div
+              initial={{ opacity: 0, x: -10 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -10 }}
               className="flex flex-col"
             >
-              <span className="font-black text-white text-base tracking-tighter leading-none">
+              <span className="font-black text-slate-900 dark:text-white text-base tracking-tighter leading-none">
                 MEDFLOW <span className="text-blue-500 italic">OS</span>
               </span>
-              <span className="text-[9px] font-black text-zinc-600 uppercase tracking-[0.3em] mt-1.5 flex items-center gap-1">
-                <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
+              <span className="text-[9px] font-black text-slate-500 dark:text-zinc-600 uppercase tracking-[0.3em] mt-1.5 flex items-center gap-1">
+                <span className="w-1.5 h-1.5 bg-white dark:bg-[#0c0c0e]merald-500 rounded-full animate-pulse" />
                 Core Node v2
               </span>
             </motion.div>
@@ -90,7 +90,7 @@ export default function Sidebar() {
                   {isActive && (
                     <motion.div
                       layoutId="navItemActive"
-                      className="absolute inset-0 bg-white/[0.03] border border-white/[0.08] rounded-[14px] z-0"
+                      className="absolute inset-0 bg-slate-100 dark:bg-white/[0.03] border border-slate-200 dark:border-white/[0.08] rounded-[14px] z-0"
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       exit={{ opacity: 0 }}
@@ -101,7 +101,7 @@ export default function Sidebar() {
 
                 {/* 2. BLUE PILL INDICATOR */}
                 {isActive && (
-                  <motion.div 
+                  <motion.div
                     layoutId="sidebarActivePill"
                     className="absolute left-[-16px] w-[4px] h-6 bg-blue-500 rounded-r-full z-10 shadow-[0_0_10px_rgba(59,130,246,0.8)]"
                     transition={{ type: 'spring', stiffness: 300, damping: 30 }}
@@ -109,24 +109,22 @@ export default function Sidebar() {
                 )}
 
                 <div className="w-12 h-full flex items-center justify-center shrink-0 relative z-10">
-                  <item.icon 
-                    size={19} 
+                  <item.icon
+                    size={19}
                     strokeWidth={isActive ? 2.5 : 2}
-                    className={`transition-all duration-500 ${
-                      isActive ? 'text-blue-500 drop-shadow-[0_0_8px_rgba(59,130,246,0.6)]' : 'text-zinc-500 group-hover:text-zinc-200'
-                    }`} 
+                    className={`transition-all duration-500 ${isActive ? 'text-blue-500 drop-shadow-[0_0_8px_rgba(59,130,246,0.6)]' : 'text-slate-500 dark:text-zinc-500 group-hover:text-slate-800 dark:text-zinc-200'
+                      }`}
                   />
                 </div>
-                
+
                 <AnimatePresence mode="wait">
                   {!isCollapsed && (
-                    <motion.span 
+                    <motion.span
                       initial={{ opacity: 0, x: -5 }}
                       animate={{ opacity: 1, x: 0 }}
                       exit={{ opacity: 0, x: -5 }}
-                      className={`font-bold text-[11px] uppercase tracking-[0.15em] whitespace-nowrap relative z-10 transition-colors duration-300 ${
-                        isActive ? 'text-white' : 'text-zinc-500 group-hover:text-zinc-200'
-                      }`}
+                      className={`font-bold text-[11px] uppercase tracking-[0.15em] whitespace-nowrap relative z-10 transition-colors duration-300 ${isActive ? 'text-slate-900 dark:text-white' : 'text-slate-500 dark:text-zinc-500 group-hover:text-slate-800 dark:text-zinc-200'
+                        }`}
                     >
                       {item.name}
                     </motion.span>
@@ -139,25 +137,25 @@ export default function Sidebar() {
       </LayoutGroup>
 
       {/* ---------------- FOOTER ACTIONS ---------------- */}
-      <div className="p-4 bg-[#0c0c0e] border-t border-white/[0.04] space-y-3">
-        <button 
+      <div className="p-4 bg-[#0c0c0e] border-t border-slate-200 dark:border-white/[0.04] space-y-3">
+        <button
           onClick={handleLogout}
-          className={`w-full flex items-center h-12 rounded-[14px] text-zinc-600 hover:bg-rose-500/10 hover:text-rose-500 border border-transparent transition-all group relative ${isCollapsed ? 'justify-center' : 'px-4 gap-4'}`}
+          className={`w-full flex items-center h-12 rounded-[14px] text-slate-500 dark:text-zinc-600 hover:bg-rose-500/10 hover:text-rose-500 border border-transparent transition-all group relative ${isCollapsed ? 'justify-center' : 'px-4 gap-4'}`}
         >
           <LogOut size={18} strokeWidth={2.5} className="shrink-0 transition-transform group-hover:-translate-x-1" />
           {!isCollapsed && (
-            <motion.span 
-               initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-               className="text-[10px] font-black uppercase tracking-[0.2em]"
+            <motion.span
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+              className="text-[10px] font-black uppercase tracking-[0.2em]"
             >
               {logoutLoading ? "Syncing..." : "Terminate"}
             </motion.span>
           )}
         </button>
-        
-        <button 
+
+        <button
           onClick={() => setIsCollapsed(!isCollapsed)}
-          className="w-full flex items-center justify-center h-11 rounded-[12px] bg-white/[0.02] border border-white/[0.05] text-zinc-500 hover:text-blue-500 hover:border-blue-500/30 transition-all shadow-sm active:scale-95"
+          className="w-full flex items-center justify-center h-11 rounded-[12px] bg-slate-50 dark:bg-white/[0.02] border border-slate-200 dark:border-white/[0.05] text-slate-500 dark:text-zinc-500 hover:text-blue-500 hover:border-blue-500/30 transition-all shadow-sm active:scale-95"
         >
           {isCollapsed ? <ChevronRight size={16} /> : (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex items-center gap-2">

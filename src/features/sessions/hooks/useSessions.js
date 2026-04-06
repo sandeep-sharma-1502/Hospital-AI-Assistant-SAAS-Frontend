@@ -37,16 +37,19 @@ const mapSession = (s) => {
   };
 };
 
-export const useSessions = () => {
+export const useSessions = (filters = {}) => {
   const [sessions, setSessions] = useState([]);
+  const [meta, setMeta] = useState({ page: 1, totalPages: 1, total: 0 });
   const [loading, setLoading]   = useState(true);
 
-  const loadSessions = async () => {
+  const loadSessions = async (overrideFilters = {}) => {
     setLoading(true);
     try {
-      const res  = await apiClient.get('/sessions');
-      const raw  = res.data?.data || res.data || [];
+      const params = { ...filters, ...overrideFilters };
+      const res = await apiClient.get('/sessions', { params });
+      const raw = res.data?.data?.sessions || res.data?.data || [];
       setSessions(raw.map(mapSession));
+      setMeta(res.data?.data?.meta || { page: 1, totalPages: 1, total: 0 });
     } catch (error) {
       console.error('Failed to load sessions', error);
     } finally {
@@ -54,7 +57,7 @@ export const useSessions = () => {
     }
   };
 
-  useEffect(() => { loadSessions(); }, []);
+  useEffect(() => { loadSessions(); }, [filters.page, filters.status]);
 
-  return { sessions, loading, refresh: loadSessions };
+  return { sessions, meta, loading, refresh: loadSessions };
 };

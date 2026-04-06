@@ -2,10 +2,7 @@ import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 
-// Pipecat AI Imports
-import { PipecatClient } from "@pipecat-ai/client-js";
-import { PipecatClientProvider, PipecatClientAudio } from "@pipecat-ai/client-react";
-import { SmallWebRTCTransport } from "@pipecat-ai/small-webrtc-transport";
+
 
 // Redux Actions
 import { syncTheme } from './store/slices/themeSlice';
@@ -43,14 +40,7 @@ import { Toaster } from 'react-hot-toast';
 //   enableCam: false,
 // });
 
-const client = new PipecatClient({
-  transport: new SmallWebRTCTransport({
-    webrtcUrl: "http://localhost:8765/api/v1/webrtc/offer", // ✅ CORRECT BACKEND URL
-    iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
-  }),
-  enableMic: false, // 🔥 we control mic manually
-  enableCam: false,
-});
+
 
 export default function App() {
   const dispatch = useDispatch();
@@ -88,7 +78,7 @@ export default function App() {
   }
 
   return (
-    <PipecatClientProvider client={client}>
+    <>
       <Toaster position="top-center" reverseOrder={false} />
       <Router>
         <Routes>
@@ -160,8 +150,6 @@ export default function App() {
         </Routes>
       </Router>
 
-      {/* Required for Voice AI to output sound */}
-      <PipecatClientAudio />
-    </PipecatClientProvider>
+    </>
   );
 }

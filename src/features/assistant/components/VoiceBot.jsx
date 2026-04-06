@@ -90,13 +90,13 @@ export default function VoiceBot() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0a0a0b] text-zinc-100 font-sans">
-      <div className="max-w-5xl mx-auto h-screen flex flex-col p-4 md:p-6">
+    <div className="h-full bg-[#0a0a0b] text-zinc-100 font-sans overflow-hidden">
+      <div className="max-w-5xl mx-auto h-full flex flex-col p-2 sm:p-4 md:p-6">
 
         {/* ── HEADER ─────────────────────────────────────────────────── */}
-        <header className="flex items-center justify-between mb-4 shrink-0">
+        <header className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-3 sm:mb-4 shrink-0 gap-3">
           <div className="flex items-center gap-3">
-            <div className={`w-10 h-10 rounded-2xl flex items-center justify-center transition-all duration-500 ${isConnected ? "bg-blue-600 shadow-[0_0_20px_rgba(37,99,235,0.5)]" : "bg-zinc-800"}`}>
+            <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl flex items-center justify-center transition-all duration-500 ${isConnected ? "bg-blue-600 shadow-[0_0_20px_rgba(37,99,235,0.5)]" : "bg-zinc-800"}`}>
               <Activity className="w-5 h-5 text-white" />
             </div>
             <div>
@@ -110,9 +110,9 @@ export default function VoiceBot() {
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center justify-between w-full sm:w-auto gap-3">
             {/* Mode Toggle */}
-            <div className="flex items-center bg-zinc-900 border border-zinc-800 rounded-2xl p-1">
+            <div className="flex items-center bg-zinc-900 border border-zinc-800 rounded-xl sm:rounded-2xl p-1">
               <button
                 onClick={() => setMode("chat")}
                 className={`flex items-center gap-1.5 px-4 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${mode === "chat" ? "bg-blue-600 text-white shadow-sm" : "text-zinc-500 hover:text-zinc-300"}`}
@@ -148,9 +148,9 @@ export default function VoiceBot() {
 
           {/* ── Welcome screen ── */}
           {!isConnected && messages.length === 0 && (
-            <div className="flex-1 flex flex-col items-center justify-center text-center p-10 space-y-5">
-              <div className="p-7 bg-zinc-800/30 rounded-full border border-white/[0.03]">
-                <Activity size={44} className="text-zinc-700" />
+            <div className="flex-1 flex flex-col items-center justify-center text-center p-6 sm:p-10 space-y-4 sm:space-y-5">
+              <div className="p-5 sm:p-7 bg-zinc-800/30 rounded-full border border-white/[0.03]">
+                <Activity size={36} className="text-zinc-700 sm:w-11 sm:h-11" />
               </div>
               <div className="max-w-xs space-y-2">
                 <h2 className="text-xl font-bold tracking-tight">AI Medical Assistant</h2>

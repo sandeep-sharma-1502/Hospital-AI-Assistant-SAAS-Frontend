@@ -1,11 +1,22 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { X, Bot, User, Calendar, Clock, Wrench, AlertTriangle } from 'lucide-react';
+import { X, Bot, User, Calendar, Clock, Wrench, AlertTriangle, Download, Printer } from 'lucide-react';
+import { useReactToPrint } from 'react-to-print';
+import { useRef } from 'react';
 
 export default function SessionDetails({ session, onClose }) {
+  const [isDownloading, setIsDownloading] = useState(false);
+
   if (!session) return null;
 
   const logs = session.logs || [];
+
+  const contentRef = useRef(null);
+  
+  const handleDownloadPdf = useReactToPrint({
+    contentRef,
+    documentTitle: `Session_Report_${session.id?.slice(0, 8)}`,
+  });
 
   return (
     <motion.div
@@ -23,6 +34,10 @@ export default function SessionDetails({ session, onClose }) {
         className="w-full max-w-lg h-full bg-white shadow-2xl flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
+        <div ref={contentRef} className="flex flex-col h-full bg-white relative w-full print:p-8">
+        <style type="text/css" media="print">
+          {`@page { size: auto;  margin: 10mm; }`}
+        </style>
         {/* Header */}
         <div className="p-6 border-b border-slate-100 flex justify-between items-start shrink-0">
           <div>
@@ -35,8 +50,8 @@ export default function SessionDetails({ session, onClose }) {
             <h2 className="text-xl font-bold text-slate-900">{session.patientName}</h2>
             <p className="text-xs text-slate-400 mt-0.5 font-mono">{session.id?.slice(0, 8)}...</p>
           </div>
-          <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-full transition-colors">
-            <X size={20} className="text-slate-400" />
+          <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-full transition-colors font-bold text-slate-400 print:hidden">
+            <X size={20} />
           </button>
         </div>
 
@@ -105,13 +120,15 @@ export default function SessionDetails({ session, onClose }) {
         </div>
 
         {/* Footer */}
-        <div className="p-6 border-t border-slate-100 bg-white shrink-0">
+        <div className="p-6 border-t border-slate-100 bg-white shrink-0 print:hidden">
           <button
-            className="w-full bg-slate-900 text-white py-3 rounded-xl font-bold text-sm hover:bg-slate-800 transition-all active:scale-95"
-            onClick={() => alert('PDF export coming soon!')}
+            className="w-full bg-slate-900 text-white flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-sm hover:bg-slate-800 transition-all active:scale-95 disabled:opacity-50"
+            onClick={handleDownloadPdf}
           >
-            Download PDF Report
+            <Printer size={16} />
+            Download or Print PDF
           </button>
+        </div>
         </div>
       </motion.div>
     </motion.div>

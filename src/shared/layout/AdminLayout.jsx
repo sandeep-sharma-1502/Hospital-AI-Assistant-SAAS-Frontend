@@ -6,7 +6,7 @@ import Navbar from './Navbar';
 export default function AdminLayout() {
   return (
     // Base: OLED Black (#09090b)
-    <div className="flex h-screen bg-[#09090b] text-zinc-400 selection:bg-blue-500/30 overflow-hidden font-sans">
+    <div className="flex h-screen bg-slate-50 dark:bg-[#09090b] text-slate-600 dark:text-zinc-400 selection:bg-blue-500/30 overflow-hidden font-sans">
       
       {/* 1. SIDEBAR: Zero gap layout for a solid desk feel */}
       <Sidebar />
@@ -21,7 +21,7 @@ export default function AdminLayout() {
         <Navbar />
         
         {/* 3. SCROLLABLE CONTENT AREA */}
-        <main className="flex-1 overflow-y-auto custom-scrollbar relative bg-[#09090b]">
+        <main className="flex-1 overflow-y-auto custom-scrollbar relative bg-slate-50 dark:bg-[#09090b]">
           
           {/* Linear-style Background Gradient (Very Subtle) */}
           <div className="absolute top-0 left-0 w-full h-[500px] bg-gradient-to-b from-blue-600/[0.03] to-transparent pointer-events-none" />

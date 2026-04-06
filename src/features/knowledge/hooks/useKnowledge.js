@@ -1,63 +1,87 @@
 import { useState, useEffect } from 'react';
 import apiClient from '../../../services/apiClient';
+import toast from 'react-hot-toast';
 
 export const useKnowledge = () => {
-  const [docs, setDocs]         = useState([]);
-  const [loading, setLoading]   = useState(true);
+  const [docs, setDocs] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
-  const [error, setError]       = useState(null);
+  const [error, setError] = useState(null);
 
   const loadDocs = async () => {
     setLoading(true);
     try {
-      const res  = await apiClient.get('/admin/knowledge');
-      const raw  = res.data?.data || res.data || [];
+      // ✅ Matches the updated GET /api/v1/admin/knowledge/list
+      const res = await apiClient.get('/admin/knowledge/list');
+      const raw = res.data?.data || [];
       setDocs(raw.map((d) => ({
-        id:       d.id,
-        name:     d.name,
-        category: d.category,
-        size:     d.content ? `${(d.content.length / 1024).toFixed(1)} KB` : '—',
-        status:   d.isActive ? 'indexed' : 'inactive',
-        date:     d.createdAt
-          ? new Date(d.createdAt).toLocaleDateString('en-IN', { dateStyle: 'medium' })
+        id:       d.docId,        // The new docId format (e.g. doc_1234_xxx)
+        name:     d.title || d.fileName,  // Extracted title or filename
+        size:     d.pagesCount ? `${d.pagesCount} pages` : '—', // Instead of KB, display page count
+        date:     d.uploadedAt
+          ? new Date(d.uploadedAt).toLocaleDateString('en-IN', { dateStyle: 'medium' })
           : '—',
-        builtIn:  !d.id.startsWith('custom'),
+        builtIn:  false, // Custom logic if needed later
       })));
     } catch (err) {
       setError(err);
+      toast.error('Failed to load knowledge base.');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleUpload = async ({ name, category, content }) => {
-    if (!name?.trim() || !content?.trim()) throw new Error('Name and content required');
+  const handleUpload = async (file) => {
+    if (!file) throw new Error('No file provided');
     setUploading(true);
+    
+    // Create form data for multipart upload
+    const formData = new FormData();
+    formData.append('pdf', file);
+    formData.append('title', file.name.replace(/\.[^/.]+$/, '')); // Name without extension
+    
+    // Show a loading toast that we can dismiss later
+    const toastId = toast.loading('Uploading and chunking document...');
+    
     try {
-      const res = await apiClient.post('/admin/knowledge/upload', { name, category, content });
+      // ✅ Matches the POST /api/v1/admin/knowledge/upload endpoint
+      const res = await apiClient.post('/admin/knowledge/upload', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+      
       const newDoc = res.data?.data;
       if (newDoc) {
         setDocs((prev) => [{
-          id:       newDoc.id,
-          name:     newDoc.name,
-          category: newDoc.category,
-          size:     `${(newDoc.content?.length / 1024 || 0).toFixed(1)} KB`,
-          status:   'indexed',
-          date:     new Date(newDoc.createdAt).toLocaleDateString('en-IN', { dateStyle: 'medium' }),
-          builtIn:  false,
+          id:       newDoc.docId,
+          name:     newDoc.title,
+          size:     newDoc.pagesCount ? `${newDoc.pagesCount} pages` : '—',
+          date:     new Date().toLocaleDateString('en-IN', { dateStyle: 'medium' }),
         }, ...prev]);
+        toast.success(res.data?.message || 'Document indexed successfully!', { id: toastId });
       }
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Upload failed.', { id: toastId });
+      throw err;
     } finally {
       setUploading(false);
     }
   };
 
-  const handleDelete = async (id) => {
-    await apiClient.delete(`/admin/knowledge/${id}`);
-    setDocs((prev) => prev.filter((d) => d.id !== id));
+  const removeDoc = async (id) => {
+    try {
+      // ✅ Matches the DELETE /api/v1/admin/knowledge/:docId endpoint
+      await apiClient.delete(`/admin/knowledge/${id}`);
+      setDocs((prev) => prev.filter((d) => d.id !== id));
+      toast.success('Document removed successfully');
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to remove document');
+    }
   };
 
   useEffect(() => { loadDocs(); }, []);
 
-  return { docs, loading, uploading, error, handleUpload, handleDelete, refresh: loadDocs };
+  // Return exactly what the provided KnowledgePage.jsx expects
+  return { docs, loading, uploading, error, handleUpload, removeDoc, refresh: loadDocs };
 };

@@ -8,24 +8,27 @@ import {
 } from "../services/appointmentApi";
 import toast from "react-hot-toast";
 
-export const useAppointments = () => {
+export const useAppointments = (filters = {}) => {
 
   const [appointments, setAppointments] = useState([]);
+  const [meta, setMeta] = useState({ page: 1, totalPages: 1, total: 0 });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
   /**
    * Load appointments
    */
-  const loadAppointments = async () => {
+  const loadAppointments = async (overrideFilters = {}) => {
 
     try {
 
       setLoading(true);
 
-      const data = await fetchAppointments();
+      const params = { ...filters, ...overrideFilters };
+      const response = await fetchAppointments(params);
 
-      setAppointments(data || []);
+      setAppointments(response.appointments || []);
+      setMeta(response.meta || { page: 1, totalPages: 1, total: 0 });
 
       setError(null);
 
@@ -126,11 +129,12 @@ export const useAppointments = () => {
 
     };
 
-  }, []);
+  }, [filters.page, filters.status, filters.search]); // Re-fetch on filter change
 
   return {
 
     appointments,
+    meta,
     loading,
     error,
 

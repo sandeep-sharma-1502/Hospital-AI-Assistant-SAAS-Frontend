@@ -3,12 +3,9 @@ import apiClient from "../../../services/apiClient";
 /**
  * Fetch appointments
  */
-export const fetchAppointments = async () => {
-
-  const res = await apiClient.get("/appointments");
-
-  return res.data?.data ?? [];
-
+export const fetchAppointments = async (params = {}) => {
+  const res = await apiClient.get("/appointments", { params });
+  return res.data?.data ?? { appointments: [], meta: {} };
 };
 
 

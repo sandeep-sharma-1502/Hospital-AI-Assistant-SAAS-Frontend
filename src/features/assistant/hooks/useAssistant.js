@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import { io } from "socket.io-client";
+import { useSelector } from "react-redux";
 
 const BACKEND_URL = "http://localhost:7000";
 
@@ -11,6 +12,7 @@ const BACKEND_URL = "http://localhost:7000";
 // ─────────────────────────────────────────────────────────────────────────────
 
 export const useAssistant = () => {
+    const { user } = useSelector((state) => state.userAuth);
     const [messages, setMessages] = useState([]);
     const [streamText, setStreamText] = useState("");
     const [isConnected, setIsConnected] = useState(false);
@@ -85,7 +87,7 @@ export const useAssistant = () => {
         isPlayingRef.current = false;
         setIsSpeaking(false);
         if (audioCtxRef.current) {
-            audioCtxRef.current.close().catch(() => {});
+            audioCtxRef.current.close().catch(() => { });
             audioCtxRef.current = null;
         }
     }, []);
@@ -97,7 +99,13 @@ export const useAssistant = () => {
         // Unlock AudioContext on first user interaction
         getAudioContext();
 
-        const socket = io(BACKEND_URL, { transports: ["websocket"] });
+        const socket = io(BACKEND_URL, {
+            transports: ["websocket"],
+            auth: {
+                userId: user?.id || null,
+                userName: user?.name || null,
+            },
+        });
         socketRef.current = socket;
 
         socket.on("connect", () => {
@@ -167,7 +175,7 @@ export const useAssistant = () => {
                         color: "#2563eb"
                     }
                 };
-                
+
                 try {
                     const rzp = new window.Razorpay(options);
                     rzp.on("payment.failed", function (response) {
